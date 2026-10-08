@@ -1,12 +1,13 @@
 # Copula Lab
 
-**An interactive page for learning bivariate copulas step by step, from transformations to dependence.**
+**Two interactive pages for learning and building bivariate models with copulas.**
 
-### ▶ [Open the Copula Lab](https://juanciro-commits.github.io/copula-lab/)
+| Page | What it does | Link |
+|---|---|---|
+| **Copula Lab** | Learn the ideas step by step, from correlation to copulas | ▶ [Open the Copula Lab](https://juanciro-commits.github.io/copula-lab/) |
+| **Model Builder** | Complete a two-variable model from the pieces you know | ▶ [Open the Model Builder](https://juanciro-commits.github.io/copula-lab/model-builder.html) |
 
-`https://juanciro-commits.github.io/copula-lab/`
-
-No installation and no account needed: it runs entirely in the browser, on a computer or a phone.
+No installation and no account needed: both run entirely in the browser, on a computer or a phone.
 
 ---
 
@@ -27,6 +28,22 @@ It was built for **Stochastic Methods for Business Analytics** (MSBA, University
 1. What are the copula families and what do they look like?
 2. What are the correlation structures of copulas (with two variables)?
 3. What do the level sets of different patterns look like (lognormal, normal)?
+
+---
+
+## Start here: why go beyond correlation
+
+The Pearson correlation and its regression line are the most basic tools for describing how two variables move together. The regression line uses the correlation to predict $Y$ from $X$:
+
+$$\hat{y} = b_0 + b_1 x, \qquad b_1 = r\,\frac{s_y}{s_x}$$
+
+They work well when the relationship is linear, but they only see the linear part.
+
+**On the page:** three scenarios, each with its regression line, Pearson $r$, $r^2$ and Kendall's $\tau$.
+
+- **Linear:** the line fits and Pearson describes the dependence well.
+- **Curved** ($Y = e^X$): with no noise the relationship is perfect, so Kendall's $\tau = 1$, yet Pearson stays near 0.6 and the line misses the curve.
+- **Heavy tails:** a few extreme points make Pearson and the line jump from sample to sample, while Kendall stays steady.
 
 ---
 
@@ -77,6 +94,8 @@ $$f_X(x) = \frac{1}{x\sqrt{2\pi\tau^2}} \exp\!\left[-\frac{(\ln x - \lambda)^2}{
 A **level set** is every point where the joint density takes the same value, like a contour line on a topographic map.
 
 **On the page:** move the sliders for $\lambda$, $\tau$, $\alpha$, $\beta$ and $\sigma$, and slide the conditional "slice" along $x$. Switch $X$ between **lognormal** and **normal** (same mean and variance): normal gives ellipses, lognormal gives teardrops. The Python code below the plot updates with your settings and can be copied.
+
+**Business example:** $X$ = daily demand (lognormal, known from history) and $Y$ = daily revenue, which sits around $1.5x$ thousand dollars once demand is known. Revenue is never modeled directly, yet its distribution follows from the two layers, so the page can answer questions like $P(\text{revenue} > \$3{,}000) \approx 8.9\%$.
 
 ### 3 · Copulas: separating the marginals from the dependence
 
@@ -154,14 +173,37 @@ The **Reference** section at the end of the page lists the support, pdf, cdf, me
 
 ---
 
+## Model Builder: complete a model from what you know
+
+### ▶ [Open the Model Builder](https://juanciro-commits.github.io/copula-lab/model-builder.html)
+
+The companion tool. Give it the pieces of a two-variable model you know, and it completes the rest. Every parameter is editable, for example the mean and variance of a normal.
+
+| What you know | What the tool completes | Mode |
+|---|---|---|
+| Both marginals and the copula (family and strength) | The joint density, the conditional of $Y$ given $X$, and $E[Y \mid X = x]$ | 1 |
+| The marginal of $X$ and how $Y$ behaves given $X$ | The marginal of $Y$, the implied copula and its closest family | 2 |
+| Paired data on $X$ and $Y$ | Both marginals and the copula, each family chosen by AIC | 3 |
+| Only the two marginals, no data | Cannot be completed: the dependence must be chosen or estimated from data | – |
+| The marginal of $Y$ and $Y$ given $X$ | Cannot recover the marginal of $X$ in general | – |
+
+- **Mode 1 · Marginals + copula:** uses $f_{XY}(x,y) = c\big(F(x), G(y)\big)\, f(x)\, g(y)$ and $f(y \mid x) = c\big(F(x), G(y)\big)\, g(y)$.
+- **Mode 2 · Marginal of X + Y given X:** with $Y \mid X = x \sim N(\alpha + \beta x, \sigma^2)$, it derives $g(y) = \int f(y \mid x)\, f(x)\, dx$, its mean and variance, and the copula the model implies. The demand-and-revenue example shows an implied copula closest to **Gumbel**: busy days pull revenue up together.
+- **Mode 3 · From data:** paste two columns. It fits each marginal by maximum likelihood (normal, lognormal, exponential, uniform, Student t, bimodal) and each copula family from Kendall's $\tau$, then picks the lowest AIC $= 2k - 2\log L$. You can also force a family. Includes an example dataset of temperature and ice-cream sales.
+
+The **"Your completed model"** table labels every piece as **Chosen**, **Derived** or **Estimated**, and two linked plots show the joint density (level sets enclosing 25%, 50%, 75% and 90% of the probability, the marginals, $E[Y \mid X = x]$ and a conditional slice) and the copula in the unit square.
+
+---
+
 ## Files
 
 | File | Content |
 |---|---|
-| `index.html` | The whole lab: one self-contained page |
+| `index.html` | The Copula Lab: one self-contained page |
+| `model-builder.html` | The Model Builder: one self-contained page |
 | `README.md` | This guide |
 
-To run it locally, download `index.html` and open it in any browser. Formulas are rendered with [MathJax](https://www.mathjax.org/), loaded from a CDN, so they need an internet connection.
+To run them locally, download the `.html` files and open them in any browser. Formulas are rendered with [MathJax](https://www.mathjax.org/), loaded from a CDN, so they need an internet connection.
 
 ---
 

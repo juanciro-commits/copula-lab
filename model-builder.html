@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Builder</title>
+<script>
+window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'none'},options:{enableMenu:false},
+ startup:{ready:function(){MathJax.startup.defaultReady();MathJax.startup.promise.then(function(){document.dispatchEvent(new Event('mj-ready'));});}}};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one working column; mode switch, input cards, completed-model table, two linked plots */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --line:#D5DBE5; --fg:#18202E; --muted:#5A6577;
+  --real:#6A5FD3; --unif:#13896B; --norm:#D2602F; --accent:#2F4A8A; --err:#B3261E;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Manrope", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10141C; --surface:#181E29; --line:#2C3545; --fg:#E6EAF2; --muted:#9AA5B8;
+  --real:#A39BF0; --unif:#4CC9A3; --norm:#F08A5D; --accent:#8FA9EA; --err:#F2948A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10141C; --surface:#181E29; --line:#2C3545; --fg:#E6EAF2; --muted:#9AA5B8;
+  --real:#A39BF0; --unif:#4CC9A3; --norm:#F08A5D; --accent:#8FA9EA; --err:#F2948A; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 48px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:8px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,4vw,40px);line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:21px;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:17px;margin:0}
+.lede{max-width:70ch;color:var(--muted);margin:0}
+.formula{font-family:var(--mono);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap}
+.tbl{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.m{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.best td{background:rgba(127,127,127,.10);font-weight:600}
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.modebtn{font:inherit;font-weight:600;color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer}
+.modebtn[aria-pressed="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.modebtn:hover{border-color:var(--accent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.x{border-top:4px solid var(--real)}.card.y{border-top:4px solid var(--unif)}.card.c{border-top:4px solid var(--norm)}
+.card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+select,input[type=number],textarea,button{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+textarea{font-family:var(--mono);font-size:13px;min-height:170px;resize:vertical}
+button{cursor:pointer;font-weight:600;color:var(--accent);width:auto}
+button:hover{border-color:var(--accent)}
+select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.range{display:flex;align-items:center;gap:10px}
+.range output{font-family:var(--mono);font-variant-numeric:tabular-nums;min-width:48px;text-align:right}
+.mom{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.err{color:var(--err);font-size:13px;margin:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.checks{display:flex;flex-wrap:wrap;gap:8px 16px}
+.chk{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+.st{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;border-radius:4px;padding:2px 7px;white-space:nowrap;color:var(--bg)}
+.st.chosen{background:var(--accent)}.st.derived{background:var(--unif)}.st.estimated{background:var(--norm)}
+.mathcell{overflow-x:auto;max-width:100%}
+.mathcell mjx-container{margin:0 !important}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.metric{border-top:3px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:2px}
+.metric span{font-size:13px;color:var(--muted)}
+.metric strong{font-family:var(--mono);font-weight:500;font-size:20px;font-variant-numeric:tabular-nums}
+.plots{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:14px}
+@media (max-width:820px){.plots{grid-template-columns:minmax(0,1fr)}}
+.plot{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.plot canvas{display:block;width:100%}
+.note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.sect{display:flex;flex-direction:column;gap:14px}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:10px 14px}
+.callout p{margin:0}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Stochastic methods · completing bivariate models</div>
+    <h1>Model Builder</h1>
+    <p class="lede">Give the tool the pieces of a two-variable model you know, and it completes the rest: the joint density, the conditional, the missing marginal, or the copula and its family. Every parameter is editable.</p>
+  </header>
+
+  <section class="sect" aria-labelledby="whathead">
+    <h2 id="whathead">What can be completed from what</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>What you know</th><th>What the tool completes</th><th>Mode</th></tr></thead>
+      <tbody>
+        <tr><td>Both marginals and the copula (family and strength)</td><td>The joint density, the conditional of Y given X, E[Y | X = x]</td><td><b>1</b></td></tr>
+        <tr><td>The marginal of X and how Y behaves given X</td><td>The marginal of Y, the implied copula and its closest family</td><td><b>2</b></td></tr>
+        <tr><td>Paired data on X and Y</td><td>Both marginals and the copula, each family chosen by AIC</td><td><b>3</b></td></tr>
+        <tr><td>Only the two marginals, no data</td><td>Cannot be completed: the dependence must be chosen (mode 1) or estimated from data (mode 3)</td><td>–</td></tr>
+        <tr><td>The marginal of Y and Y given X</td><td>Cannot recover the marginal of X in general: different X can produce the same Y</td><td>–</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <section class="sect" aria-labelledby="buildhead">
+    <h2 id="buildhead">Build your model</h2>
+    <div class="modes" role="group" aria-label="Choose what you know">
+      <button type="button" class="modebtn" data-mode="1" aria-pressed="true">1 · Marginals + copula</button>
+      <button type="button" class="modebtn" data-mode="2" aria-pressed="false">2 · Marginal of X + Y given X</button>
+      <button type="button" class="modebtn" data-mode="3" aria-pressed="false">3 · From data</button>
+    </div>
+
+    <div id="m1" class="cards">
+      <div class="card x" id="m1x"></div>
+      <div class="card y" id="m1y"></div>
+      <div class="card c">
+        <div class="tag">Dependence</div><h3>Copula</h3>
+        <div class="field"><label for="m1cf">Family (tail dependence)</label><select id="m1cf"></select></div>
+        <div class="field" id="m1taubox"><label for="m1tau">Strength: Kendall's τ</label><div class="range"><input type="range" id="m1tau" min="-0.9" max="0.9" step="0.05" value="0.5"><output id="m1tauo">0.50</output></div></div>
+        <div class="mom" id="m1par"></div>
+      </div>
+    </div>
+
+    <div id="m2" class="cards" hidden>
+      <div class="card x" id="m2x"></div>
+      <div class="card y">
+        <div class="tag">Y given X</div><h3>Conditional of Y given X</h3>
+        <p class="note" style="margin:0">Given X = x, Y is normal around a line: Y | X = x ~ N(α + βx, σ²).</p>
+        <div class="fields">
+          <div class="field"><label for="m2a">Intercept α</label><input type="number" id="m2a" value="0" step="0.1"></div>
+          <div class="field"><label for="m2b">Slope β</label><input type="number" id="m2b" value="1" step="0.1"></div>
+          <div class="field"><label for="m2s">Variance σ²</label><input type="number" id="m2s" value="0.25" step="0.05"></div>
+        </div>
+        <p class="err" id="m2err" hidden></p>
+      </div>
+      <div class="card c">
+        <div class="tag">Business example</div><h3>Demand and revenue</h3>
+        <p class="note" style="margin:0">X = daily demand in hundreds of units, lognormal. Revenue in thousands of dollars sits around 1.5·x, give or take $300.</p>
+        <button type="button" id="m2ex">Load this example</button>
+      </div>
+    </div>
+
+    <div id="m3" class="cards" hidden>
+      <div class="card" style="grid-column:1/-1">
+        <div class="tag">Paired data</div><h3>Paste two columns: X and Y</h3>
+        <p class="note" style="margin:0">One pair per line, separated by a comma, tab, semicolon or space. A header line is fine. At least 30 pairs.</p>
+        <textarea id="m3txt" spellcheck="false" aria-label="Paired data, two columns"></textarea>
+        <div class="row">
+          <button type="button" id="m3fit">Fit the model</button>
+          <button type="button" id="m3ex">Load example: temperature and ice-cream sales</button>
+        </div>
+        <div class="fields">
+          <div class="field"><label for="m3xf">Family for X</label><select id="m3xf"></select></div>
+          <div class="field"><label for="m3yf">Family for Y</label><select id="m3yf"></select></div>
+          <div class="field"><label for="m3cf">Copula family</label><select id="m3cf"></select></div>
+        </div>
+        <p class="err" id="m3err" hidden></p>
+      </div>
+      <div class="card x"><div class="tag">Marginal of X</div><h3>Candidates by AIC</h3><div class="tbl" id="m3xtab"></div></div>
+      <div class="card y"><div class="tag">Marginal of Y</div><h3>Candidates by AIC</h3><div class="tbl" id="m3ytab"></div></div>
+      <div class="card c"><div class="tag">Copula</div><h3>Candidates by AIC</h3><div class="tbl" id="m3ctab"></div><p class="mom" id="m3tau"></p></div>
+    </div>
+  </section>
+
+  <section class="sect" aria-labelledby="donehead">
+    <h2 id="donehead">Your completed model</h2>
+    <div class="tbl"><table id="sumtab"></table></div>
+    <div class="metrics">
+      <div class="metric"><span>Kendall's τ</span><strong id="mt-tau">–</strong></div>
+      <div class="metric"><span>Pearson r</span><strong id="mt-r">–</strong></div>
+      <div class="metric"><span>E[X] · V(X)</span><strong id="mt-x">–</strong></div>
+      <div class="metric"><span>E[Y] · V(Y)</span><strong id="mt-y">–</strong></div>
+    </div>
+    <div class="row">
+      <div class="checks">
+        <label class="chk" for="shC"><input type="checkbox" id="shC" checked> Level sets</label>
+        <label class="chk" for="shP"><input type="checkbox" id="shP" checked> Points</label>
+        <label class="chk" for="shM"><input type="checkbox" id="shM" checked> E[Y | X = x]</label>
+        <label class="chk" for="shS"><input type="checkbox" id="shS" checked> Slice f(y | x)</label>
+      </div>
+      <div class="field" style="flex:1;min-width:200px"><label for="slx">Slice at x</label><div class="range"><input type="range" id="slx" min="0" max="1000" step="1" value="500"><output id="slxo">–</output></div></div>
+    </div>
+    <div class="plots">
+      <div class="plot"><canvas id="cvj" aria-label="Joint density of X and Y with level sets, marginals on top and right, conditional mean and a conditional slice"></canvas><p class="note">Rings enclose 25%, 50%, 75% and 90% of the probability. Top: pdf of X. Right: pdf of Y.</p></div>
+      <div class="plot"><canvas id="cvc" aria-label="The copula: pairs of percentiles in the unit square"></canvas><p class="note">The copula: each pair turned into percentiles (u, v). It shows only the dependence.</p></div>
+    </div>
+  </section>
+
+  <footer>Formulas: joint f(x, y) = c(F(x), G(y)) · f(x) · g(y); conditional f(y | x) = c(F(x), G(y)) · g(y). Copula parameters come from Kendall's τ; families are compared by AIC = 2k − 2·log-likelihood (lower is better). Simulations use a fixed seed, so results repeat. Companion to the Copula Lab.</footer>
+</div>
+<script>
+const MB=(function(){
+const SQ2PI=Math.sqrt(2*Math.PI),LN2PI=Math.log(2*Math.PI);
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let rnd=Math.random;
+function seed(s){rnd=mulberry32(s);}
+function U(){let u=rnd();while(u<=0||u>=1)u=rnd();return u;}
+function rn(){return Math.sqrt(-2*Math.log(U()))*Math.cos(2*Math.PI*U());}
+function rexp(){return -Math.log(U());}
+function rchi(k){let s=0;for(let i=0;i<k;i++){const z=rn();s+=z*z;}return s;}
+function erfc(x){const z=Math.abs(x),t=1/(1+0.5*z);const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return x>=0?r:2-r;}
+const Phi=z=>0.5*erfc(-z/Math.SQRT2);
+const phi=z=>Math.exp(-z*z/2)/SQ2PI;
+function Pinv(p){if(p<=0)return -Infinity;if(p>=1)return Infinity;
+ const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00],
+ b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01],
+ c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00],
+ d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+ const pl=0.02425;let q,r,x;
+ if(p<pl){q=Math.sqrt(-2*Math.log(p));x=(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+ else if(p<=1-pl){q=p-0.5;r=q*q;x=(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+ else{q=Math.sqrt(-2*Math.log(1-p));x=-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+ const e=Phi(x)-p,uu=e*SQ2PI*Math.exp(x*x/2);return x-uu/(1+x*uu/2);}
+const S3=Math.sqrt(3);
+const pdf3=z=>6*S3/(Math.PI*Math.pow(3+z*z,2));
+const cdf3=z=>0.5+((z/S3)/(1+z*z/3)+Math.atan(z/S3))/Math.PI;
+function bisect(F,u,lo,hi){let k=0;while(F(lo)>u&&k++<80)lo=lo-(hi-lo)*2;k=0;while(F(hi)<u&&k++<80)hi=hi+(hi-lo)*2;for(let i=0;i<80;i++){const m=(lo+hi)/2;F(m)<u?lo=m:hi=m;}return (lo+hi)/2;}
+const inv3=u=>bisect(cdf3,u,-3,3);
+const clamp=u=>Math.min(1-1e-9,Math.max(1e-9,u));
+function nfmt(v){if(!isFinite(v))return String(v);const a=Math.abs(v);if(a!==0&&(a<0.001||a>=1e5))return v.toExponential(2);return String(+v.toPrecision(3));}
+
+/* ---------- marginal families ---------- */
+const MARG={
+ normal:{name:'Normal',k:2,params:[{k:'mu',label:'Mean μ',def:0,step:0.1},{k:'v',label:'Variance σ²',def:1,step:0.1,pos:true}],
+  pdf:(x,p)=>phi((x-p.mu)/Math.sqrt(p.v))/Math.sqrt(p.v),cdf:(x,p)=>Phi((x-p.mu)/Math.sqrt(p.v)),inv:(u,p)=>p.mu+Math.sqrt(p.v)*Pinv(u),
+  mean:p=>p.mu,vari:p=>p.v,check:p=>p.v>0?'':'The variance must be positive.',
+  tex:p=>'N\\!\\left(\\mu='+nfmt(p.mu)+',\\ \\sigma^2='+nfmt(p.v)+'\\right)',
+  fit:xs=>{const n=xs.length,m=xs.reduce((a,b)=>a+b,0)/n,v=xs.reduce((a,b)=>a+(b-m)*(b-m),0)/n;return {mu:m,v:v};}},
+ lognormal:{name:'Lognormal',k:2,params:[{k:'lam',label:'Mean of ln X, λ',def:0,step:0.1},{k:'t2',label:'Variance of ln X, τ²',def:0.25,step:0.05,pos:true}],
+  pdf:(x,p)=>x<=0?0:phi((Math.log(x)-p.lam)/Math.sqrt(p.t2))/(x*Math.sqrt(p.t2)),cdf:(x,p)=>x<=0?0:Phi((Math.log(x)-p.lam)/Math.sqrt(p.t2)),inv:(u,p)=>Math.exp(p.lam+Math.sqrt(p.t2)*Pinv(u)),
+  mean:p=>Math.exp(p.lam+p.t2/2),vari:p=>(Math.exp(p.t2)-1)*Math.exp(2*p.lam+p.t2),check:p=>p.t2>0?'':'The variance of ln X must be positive.',
+  tex:p=>'\\text{Lognormal}\\!\\left(\\lambda='+nfmt(p.lam)+',\\ \\tau^2='+nfmt(p.t2)+'\\right)',
+  valid:xs=>xs.every(x=>x>0),
+  fit:xs=>{const l=xs.map(Math.log),n=l.length,m=l.reduce((a,b)=>a+b,0)/n,v=l.reduce((a,b)=>a+(b-m)*(b-m),0)/n;return {lam:m,t2:v};}},
+ exponential:{name:'Exponential',k:1,params:[{k:'th',label:'Rate θ (mean 1/θ)',def:1,step:0.1,pos:true}],
+  pdf:(x,p)=>x<0?0:p.th*Math.exp(-p.th*x),cdf:(x,p)=>x<0?0:1-Math.exp(-p.th*x),inv:(u,p)=>-Math.log(1-u)/p.th,
+  mean:p=>1/p.th,vari:p=>1/(p.th*p.th),check:p=>p.th>0?'':'The rate must be positive.',
+  tex:p=>'\\text{Exp}\\!\\left(\\theta='+nfmt(p.th)+'\\right)',
+  valid:xs=>xs.every(x=>x>=0),
+  fit:xs=>({th:xs.length/xs.reduce((a,b)=>a+b,0)})},
+ uniform:{name:'Uniform',k:2,params:[{k:'a',label:'Lower end a',def:0,step:0.1},{k:'b',label:'Upper end b',def:1,step:0.1}],
+  pdf:(x,p)=>(x<p.a||x>p.b)?0:1/(p.b-p.a),cdf:(x,p)=>x<=p.a?0:x>=p.b?1:(x-p.a)/(p.b-p.a),inv:(u,p)=>p.a+u*(p.b-p.a),
+  mean:p=>(p.a+p.b)/2,vari:p=>(p.b-p.a)*(p.b-p.a)/12,check:p=>p.b>p.a?'':'The upper end b must be larger than a.',
+  tex:p=>'U\\!\\left(a='+nfmt(p.a)+',\\ b='+nfmt(p.b)+'\\right)',
+  fit:xs=>{let mn=Infinity,mx=-Infinity;xs.forEach(x=>{if(x<mn)mn=x;if(x>mx)mx=x;});const e=(mx-mn)*1e-6||1e-6;return {a:mn-e,b:mx+e};}},
+ t3:{name:'Student t (3 d.f.)',k:2,params:[{k:'mu',label:'Location μ',def:0,step:0.1},{k:'s',label:'Scale s (variance 3s²)',def:1,step:0.1,pos:true}],
+  pdf:(x,p)=>pdf3((x-p.mu)/p.s)/p.s,cdf:(x,p)=>cdf3((x-p.mu)/p.s),inv:(u,p)=>p.mu+p.s*inv3(u),
+  mean:p=>p.mu,vari:p=>3*p.s*p.s,check:p=>p.s>0?'':'The scale must be positive.',
+  tex:p=>'t_3\\!\\left(\\mu='+nfmt(p.mu)+',\\ s='+nfmt(p.s)+'\\right)',
+  fit:xs=>{const n=xs.length,srt=[...xs].sort((a,b)=>a-b);let mu=srt[Math.floor(n/2)];let mad=[...xs].map(x=>Math.abs(x-mu)).sort((a,b)=>a-b)[Math.floor(n/2)]||1;let s=mad/0.765;
+   for(let it=0;it<200;it++){let sw=0,swx=0;const w=xs.map(x=>{const r=(x-mu)/s;return 4/(3+r*r);});w.forEach((wi,i)=>{sw+=wi;swx+=wi*xs[i];});mu=swx/sw;let ss=0;xs.forEach((x,i)=>{ss+=w[i]*(x-mu)*(x-mu);});s=Math.sqrt(ss/n);}
+   return {mu:mu,s:s};}},
+ bimodal:{name:'Bimodal (two equal normal peaks)',k:3,params:[{k:'m1',label:'Mean of peak 1, μ₁',def:-2,step:0.1},{k:'m2',label:'Mean of peak 2, μ₂',def:2,step:0.1},{k:'v',label:'Variance of each peak, σ²',def:0.49,step:0.05,pos:true}],
+  pdf:(x,p)=>{const s=Math.sqrt(p.v);return 0.5*phi((x-p.m1)/s)/s+0.5*phi((x-p.m2)/s)/s;},cdf:(x,p)=>{const s=Math.sqrt(p.v);return 0.5*Phi((x-p.m1)/s)+0.5*Phi((x-p.m2)/s);},
+  inv:(u,p)=>bisect(x=>MARG.bimodal.cdf(x,p),u,Math.min(p.m1,p.m2)-3,Math.max(p.m1,p.m2)+3),
+  mean:p=>(p.m1+p.m2)/2,vari:p=>p.v+Math.pow((p.m1-p.m2)/2,2),check:p=>p.v>0?'':'The variance must be positive.',
+  tex:p=>'\\tfrac12 N\\!\\left('+nfmt(p.m1)+',\\,'+nfmt(p.v)+'\\right)+\\tfrac12 N\\!\\left('+nfmt(p.m2)+',\\,'+nfmt(p.v)+'\\right)',
+  fit:xs=>{const n=xs.length,srt=[...xs].sort((a,b)=>a-b);let m1=srt[Math.floor(n*0.25)],m2=srt[Math.floor(n*0.75)];const mm=xs.reduce((a,b)=>a+b,0)/n;let v=xs.reduce((a,b)=>a+(b-mm)*(b-mm),0)/n/4||1;
+   for(let it=0;it<300;it++){const s=Math.sqrt(v);let r1=0,r1x=0,r2x=0;const r=xs.map(x=>{const a=phi((x-m1)/s),b=phi((x-m2)/s);return a/(a+b||1);});
+    r.forEach((ri,i)=>{r1+=ri;r1x+=ri*xs[i];r2x+=(1-ri)*xs[i];});m1=r1x/r1;m2=r2x/(n-r1);let ss=0;xs.forEach((x,i)=>{ss+=r[i]*(x-m1)*(x-m1)+(1-r[i])*(x-m2)*(x-m2);});v=Math.max(ss/n,1e-8);}
+   return {m1:Math.min(m1,m2),m2:Math.max(m1,m2),v:v};}}};
+function makeMarg(fam,p){const F=MARG[fam];const m={fam,p,name:F.name,pdf:x=>F.pdf(x,p),cdf:x=>F.cdf(x,p),inv:u=>F.inv(clamp(u),p),mean:F.mean(p),vari:F.vari(p),tex:F.tex(p)};
+ const lo=(fam==='exponential'||fam==='lognormal')?0:m.inv(0.004),hi=m.inv(0.996);
+ if(fam==='uniform'){const w=p.b-p.a;m.range=[p.a-0.08*w,p.b+0.08*w];}else m.range=[lo,hi];
+ return m;}
+function margLL(fam,p,xs){const F=MARG[fam];let ll=0;for(const x of xs){const d=F.pdf(x,p);if(!(d>0))return -Infinity;ll+=Math.log(d);}return ll;}
+function fitMarg(xs){const out=[];for(const fam of Object.keys(MARG)){const F=MARG[fam];if(F.valid&&!F.valid(xs)){out.push({fam,ok:false});continue;}const p=F.fit(xs);const ll=margLL(fam,p,xs);out.push({fam,ok:isFinite(ll),p,ll,aic:2*F.k-2*ll});}return out;}
+
+/* ---------- copula families ---------- */
+function debye(th){const n=400;let s=0;for(let i=1;i<=n;i++){const t=th*(i-0.5)/n;s+=t/(Math.exp(t)-1);}return s/n;}
+function frankTheta(tau){if(Math.abs(tau)<1e-6)return 0;const sg=Math.sign(tau),a=Math.abs(tau);let lo=1e-4,hi=120;for(let i=0;i<70;i++){const m=(lo+hi)/2;(1-4/m*(1-debye(m)))<a?lo=m:hi=m;}return sg*(lo+hi)/2;}
+const COP={
+ ind:{name:'Independence',tails:'None',par:()=>null,parText:()=>'no parameter',k:0,
+  logc:()=>0,sample:()=>[U(),U()]},
+ gauss:{name:'Gaussian',tails:'None',par:t=>Math.sin(Math.PI*t/2),parText:r=>'ρ = '+nfmt(r),k:1,
+  logc:(u,v,r)=>{const a=Pinv(clamp(u)),b=Pinv(clamp(v)),q=1-r*r;return -0.5*Math.log(q)-(r*r*(a*a+b*b)-2*r*a*b)/(2*q);},
+  sample:r=>{const a=rn(),b=r*a+Math.sqrt(1-r*r)*rn();return [Phi(a),Phi(b)];}},
+ t:{name:'Student t (ν = 3)',tails:'Both',par:t=>Math.sin(Math.PI*t/2),parText:r=>'ρ = '+nfmt(r)+', ν = 3',k:1,
+  logc:(u,v,r)=>{const x=inv3(clamp(u)),y=inv3(clamp(v)),q=1-r*r,Q=(x*x-2*r*x*y+y*y)/q;
+   const l2=Math.log(1.5/(3*Math.PI*Math.sqrt(q)))-2.5*Math.log(1+Q/3),l1=z=>Math.log(6*S3/Math.PI)-2*Math.log(3+z*z);return l2-l1(x)-l1(y);},
+  sample:r=>{const a=rn(),b=r*a+Math.sqrt(1-r*r)*rn(),w=Math.sqrt(rchi(3)/3);return [cdf3(a/w),cdf3(b/w)];}},
+ clayton:{name:'Clayton',tails:'Lower',rot:true,par:t=>{const a=Math.abs(t);return 2*a/(1-a);},parText:(th,t)=>'θ = '+nfmt(th)+(t<0?' (rotated)':''),k:1,
+  base:(u,v,th)=>{if(th<1e-8)return 0;const lu=Math.log(u),lv=Math.log(v);return Math.log(1+th)+(-th-1)*(lu+lv)+(-2-1/th)*Math.log(Math.exp(-th*lu)+Math.exp(-th*lv)-1);},
+  bsample:th=>{const u=U(),w=U();if(th<1e-8)return [u,w];return [u,Math.pow(Math.pow(u,-th)*(Math.pow(w,-th/(1+th))-1)+1,-1/th)];}},
+ gumbel:{name:'Gumbel',tails:'Upper',rot:true,par:t=>1/(1-Math.abs(t)),parText:(th,t)=>'θ = '+nfmt(th)+(t<0?' (rotated)':''),k:1,
+  base:(u,v,th)=>{if(th<1+1e-9)return 0;const x=-Math.log(u),y=-Math.log(v),S=Math.pow(x,th)+Math.pow(y,th),A=Math.pow(S,1/th);
+   return -A-Math.log(u)-Math.log(v)+(th-1)*(Math.log(x)+Math.log(y))+(-2+2/th)*Math.log(S)+Math.log(A+th-1)-Math.log(A);},
+  bsample:th=>{if(th<1+1e-9)return [U(),U()];const al=1/th,W=Math.PI*U(),E=rexp();const M=Math.sin(al*W)/Math.pow(Math.sin(W),1/al)*Math.pow(Math.sin((1-al)*W)/E,(1-al)/al);
+   return [Math.exp(-Math.pow(rexp()/M,al)),Math.exp(-Math.pow(rexp()/M,al))];}},
+ frank:{name:'Frank',tails:'None',par:t=>frankTheta(t),parText:th=>'θ = '+nfmt(th),k:1,
+  logc:(u,v,th)=>{if(Math.abs(th)<1e-8)return 0;const e=Math.exp(-th),D=(1-e)-(1-Math.exp(-th*u))*(1-Math.exp(-th*v));return Math.log(Math.abs(th*(1-e)))-th*(u+v)-2*Math.log(Math.abs(D));},
+  sample:th=>{const u=U(),w=U();if(Math.abs(th)<1e-8)return [u,w];return [u,-Math.log(1+w*(Math.exp(-th)-1)/(w+(1-w)*Math.exp(-th*u)))/th];}}};
+function makeCop(fam,tau){const C=COP[fam];const par=C.par(tau);const neg=C.rot&&tau<0;
+ const logc=C.rot?(u,v)=>C.base(clamp(u),clamp(neg?1-v:v),par):(u,v)=>C.logc(clamp(u),clamp(v),par);
+ const sample=C.rot?()=>{const s=C.bsample(par);return neg?[s[0],1-s[1]]:s;}:()=>C.sample(par);
+ return {fam,tau,par,name:C.name,tails:C.tails,k:C.k,parText:fam==='ind'?'no parameter':C.parText(par,tau),logc,sample};}
+function kendall(xs,ys){const n=xs.length;let c=0,d=0;for(let i=0;i<n;i++){const xi=xs[i],yi=ys[i];for(let j=i+1;j<n;j++){const s=(xi-xs[j])*(yi-ys[j]);if(s>0)c++;else if(s<0)d++;}}return (c-d)/((c+d)||1);}
+function pearson(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;let sab=0,saa=0,sbb=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;sab+=x*y;saa+=x*x;sbb+=y*y;}return sab/Math.sqrt(saa*sbb);}
+function ranks(a){const n=a.length,idx=a.map((v,i)=>i).sort((i,j)=>a[i]-a[j]),r=new Array(n);let i=0;while(i<n){let j=i;while(j+1<n&&a[idx[j+1]]===a[idx[i]])j++;const rk=(i+j)/2+1;for(let k=i;k<=j;k++)r[idx[k]]=rk/(n+1);i=j+1;}return r;}
+function fitCop(us,vs){const tau=kendall(us,vs);const out=[];for(const fam of Object.keys(COP)){const t=Math.max(-0.95,Math.min(0.95,tau));const c=makeCop(fam,fam==='ind'?0:t);let ll=0;for(let i=0;i<us.length;i++)ll+=c.logc(us[i],vs[i]);out.push({fam,tau:fam==='ind'?0:t,ll,aic:2*c.k-2*ll,parText:c.parText});}return {tau,list:out};}
+return {seed,U,rn,Phi,phi,Pinv,MARG,makeMarg,fitMarg,margLL,COP,makeCop,fitCop,kendall,pearson,ranks,bisect,nfmt,clamp};
+})();
+if(typeof module!=='undefined')module.exports=MB;
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id),M=MB,nf=M.nfmt;
+let mode=1,mj=false,model=null,m3=null,raf=0;
+const SYM={mu:'μ',v:'σ²',lam:'λ',t2:'τ²',th:'θ',a:'a',b:'b',s:'s',m1:'μ₁',m2:'μ₂'};
+function tex(el,src,fb){if(mj&&window.MathJax&&MathJax.tex2svg){try{el.replaceChildren(MathJax.tex2svg(src,{display:false}));return;}catch(e){}}el.textContent=fb||src;}
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function rgba(h,a){if(h[0]==='#'&&h.length===7)return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';return h;}
+function ptext(fam,p){return M.MARG[fam].params.map(pr=>SYM[pr.k]+' = '+nf(p[pr.k])).join(', ');}
+
+/* ---------- marginal input cards ---------- */
+function margCard(id,title,tag,defFam,defP){
+ const el=$(id);
+ el.innerHTML='<div class="tag">'+tag+'</div><h3>'+title+'</h3><div class="field"><label for="'+id+'f">Distribution</label><select id="'+id+'f"></select></div><div class="fields" id="'+id+'p"></div><div class="mom" id="'+id+'m"></div><p class="err" id="'+id+'e" hidden></p>';
+ const sel=$(id+'f');Object.keys(M.MARG).forEach(k=>sel.add(new Option(M.MARG[k].name,k)));sel.value=defFam;
+ const store={};store[defFam]=Object.assign({},defP);
+ function render(){const F=M.MARG[sel.value],box=$(id+'p'),vals=store[sel.value]||(store[sel.value]={});box.replaceChildren();
+  F.params.forEach(pr=>{if(vals[pr.k]===undefined)vals[pr.k]=pr.def;const f=document.createElement('div');f.className='field';
+   const lab=document.createElement('label');lab.htmlFor=id+'-'+pr.k;lab.textContent=pr.label;const inp=document.createElement('input');inp.type='number';inp.id=id+'-'+pr.k;inp.step=pr.step;inp.value=vals[pr.k];
+   inp.addEventListener('input',()=>{const v=parseFloat(inp.value);vals[pr.k]=isFinite(v)?v:NaN;schedule();});f.append(lab,inp);box.appendChild(f);});}
+ sel.addEventListener('change',()=>{render();schedule();});render();
+ return {get(){const fam=sel.value,F=M.MARG[fam],vals=store[fam],p={};for(const pr of F.params){const v=vals[pr.k];if(!isFinite(v))return {err:'Enter a number for '+pr.label.toLowerCase()+'.'};p[pr.k]=v;}const e=F.check(p);return e?{err:e}:{fam,p};},
+  set(fam,p){sel.value=fam;store[fam]=Object.assign({},p);render();},
+  err(m){const e=$(id+'e');e.textContent=m||'';e.hidden=!m;},
+  mom(m){$(id+'m').textContent=m?'E[·] = '+nf(m.mean)+' · V(·) = '+nf(m.vari):'';}};}
+const c1x=margCard('m1x','Marginal of X','Variable X','normal',{mu:24,v:25});
+const c1y=margCard('m1y','Marginal of Y','Variable Y','lognormal',{lam:0.5,t2:0.16});
+const c2x=margCard('m2x','Marginal of X','Variable X','lognormal',{lam:0,t2:0.25});
+Object.keys(M.COP).forEach(k=>$('m1cf').add(new Option(M.COP[k].name+' · tails: '+M.COP[k].tails.toLowerCase(),k)));$('m1cf').value='clayton';
+['m3xf','m3yf'].forEach(s=>{$(s).add(new Option('Auto: best AIC','auto'));Object.keys(M.MARG).forEach(k=>$(s).add(new Option(M.MARG[k].name,k)));});
+$('m3cf').add(new Option('Auto: best AIC','auto'));Object.keys(M.COP).forEach(k=>$('m3cf').add(new Option(M.COP[k].name,k)));
+
+/* ---------- mode 1: marginals + copula ---------- */
+function compute1(){const gx=c1x.get(),gy=c1y.get();c1x.err(gx.err);c1y.err(gy.err);if(gx.err||gy.err){c1x.mom(null);c1y.mom(null);return null;}
+ const X=M.makeMarg(gx.fam,gx.p),Y=M.makeMarg(gy.fam,gy.p);c1x.mom(X);c1y.mom(Y);
+ const fam=$('m1cf').value,tau=fam==='ind'?0:+$('m1tau').value;$('m1tauo').textContent=tau.toFixed(2);$('m1taubox').hidden=fam==='ind';
+ const C=M.makeCop(fam,tau);$('m1par').textContent='Parameter: '+C.parText+' · tail dependence: '+C.tails.toLowerCase();
+ M.seed(11);const pts=[],uv=[];for(let i=0;i<1200;i++){const s=C.sample();uv.push(s);pts.push([X.inv(s[0]),Y.inv(s[1])]);}
+ const rows=[
+  {piece:'Marginal of X',st:'chosen',tex:'X\\sim '+X.tex,fb:X.name+' ('+ptext(gx.fam,gx.p)+')'},
+  {piece:'Marginal of Y',st:'chosen',tex:'Y\\sim '+Y.tex,fb:Y.name+' ('+ptext(gy.fam,gy.p)+')'},
+  {piece:'Copula',st:'chosen',text:C.name+' · τ = '+tau.toFixed(2)+' · '+C.parText+' · tail dependence: '+C.tails.toLowerCase()},
+  {piece:'Conditional of Y given X',st:'derived',tex:'f_{Y\\mid X}(y\\mid x)=c\\big(F(x),G(y)\\big)\\,g(y)',fb:'f(y | x) = c(F(x), G(y)) · g(y)',note:'Drawn as the slice; its mean is the E[Y | X = x] curve.'},
+  {piece:'Joint density',st:'derived',tex:'f_{XY}(x,y)=c\\big(F(x),G(y)\\big)\\,f(x)\\,g(y)',fb:'f(x, y) = c(F(x), G(y)) · f(x) · g(y)',note:'Drawn as the level sets.'}];
+ return {type:'cop',X,Y,C,pts,uv,rows};}
+
+/* ---------- mode 2: marginal of X + Y given X ---------- */
+function compute2(){const gx=c2x.get();c2x.err(gx.err);
+ const a=parseFloat($('m2a').value),b=parseFloat($('m2b').value),s2=parseFloat($('m2s').value);
+ let e='';if(![a,b,s2].every(isFinite))e='Enter a number in every field.';else if(s2<=0)e='The variance σ² must be positive.';
+ $('m2err').textContent=e;$('m2err').hidden=!e;if(gx.err||e){c2x.mom(null);return null;}
+ const X=M.makeMarg(gx.fam,gx.p);c2x.mom(X);const s=Math.sqrt(s2),K=400,xq=[];for(let i=0;i<K;i++)xq.push(X.inv((i+0.5)/K));
+ const pdf=y=>{let t=0;for(const x of xq)t+=M.phi((y-a-b*x)/s);return t/(K*s);},cdf=y=>{let t=0;for(const x of xq)t+=M.Phi((y-a-b*x)/s);return t/K;};
+ const mean=a+b*X.mean,vari=b*b*X.vari+s2,sd=Math.sqrt(vari),inv=u=>M.bisect(cdf,M.clamp(u),mean-sd,mean+sd);
+ const Y={pdf,cdf,inv,mean,vari,range:[inv(0.004),inv(0.996)]};
+ M.seed(11);const pts=[];for(let i=0;i<1200;i++){const x=X.inv(M.U());pts.push([x,a+b*x+s*M.rn()]);}
+ const us=M.ranks(pts.map(p=>p[0])),vs=M.ranks(pts.map(p=>p[1])),uv=us.map((u,i)=>[u,vs[i]]);
+ const fit=M.fitCop(us,vs);fit.list.sort((p,q)=>p.aic-q.aic);const best=fit.list[0];
+ const lin=nf(a)+(b<0?'-':'+')+nf(Math.abs(b))+'\\,x',exact=gx.fam==='normal';
+ const rho=exact&&b!==0?b*Math.sqrt(X.vari)/sd:0;
+ const rows=[
+  {piece:'Marginal of X',st:'chosen',tex:'X\\sim '+X.tex,fb:X.name+' ('+ptext(gx.fam,gx.p)+')'},
+  {piece:'Y given X',st:'chosen',tex:'Y\\mid X=x\\sim N\\!\\left('+lin+',\\ '+nf(s2)+'\\right)',fb:'Y | X = x ~ N(α + βx, σ²)',note:'Its mean, α + βx, is the E[Y | X = x] line.'},
+  exact?{piece:'Marginal of Y',st:'derived',tex:'Y\\sim N\\!\\left(\\mu='+nf(mean)+',\\ \\sigma^2='+nf(vari)+'\\right)',fb:'Normal (μ = '+nf(mean)+', σ² = '+nf(vari)+')',note:'Exact: a normal X passed through a line plus normal noise stays normal.'}
+       :{piece:'Marginal of Y',st:'derived',tex:'f_Y(y)=\\int f_{Y\\mid X}(y\\mid x)\\,f_X(x)\\,dx',fb:'g(y) = ∫ f(y | x) f(x) dx',note:'E[Y] = α + β·E[X] = '+nf(mean)+' · V(Y) = β²·V(X) + σ² = '+nf(vari)+'. A mixture of normals, not a standard family: shown as the curve on the right.'},
+  exact?{piece:'Copula',st:'derived',text:b===0?'Independence (β = 0)':'Gaussian, exactly · ρ = '+nf(rho)+' · τ = '+nf(2/Math.PI*Math.asin(rho)),note:'With a normal X the implied copula is exactly Gaussian.'}
+       :{piece:'Copula',st:'derived',text:'Closest family: '+M.COP[best.fam].name+' · τ ≈ '+nf(fit.tau)+' · '+best.parText,note:'Estimated from 1,200 simulated pairs; AIC: '+fit.list.slice(0,3).map(r=>M.COP[r.fam].name+' '+nf(r.aic)).join(' · ')+'. Not exactly any family in general.'},
+  {piece:'Joint density',st:'derived',tex:'f_{XY}(x,y)=f_{Y\\mid X}(y\\mid x)\\,f_X(x)',fb:'f(x, y) = f(y | x) · f(x)',note:'Drawn as the level sets.'}];
+ return {type:'hier',X,Y,a,b,s,pts,uv,rows,tau:exact?(b===0?0:2/Math.PI*Math.asin(rho)):fit.tau};}
+
+/* ---------- mode 3: from data ---------- */
+function parse(txt){const xs=[],ys=[];txt.split(/\r?\n/).forEach(l=>{const t=l.trim().split(/[,;\t ]+/);if(t.length<2)return;const x=parseFloat(t[0]),y=parseFloat(t[1]);if(isFinite(x)&&isFinite(y)&&/^[-+0-9.eE]+$/.test(t[0])&&/^[-+0-9.eE]+$/.test(t[1])){xs.push(x);ys.push(y);}});return {xs,ys};}
+function m3err(m){$('m3err').textContent=m||'';$('m3err').hidden=!m;}
+function fitData(){const {xs,ys}=parse($('m3txt').value);if(xs.length<30){m3err('Found '+xs.length+' valid pairs. Paste at least 30 lines with two numbers each.');return;}
+ const n=Math.min(xs.length,3000),X=xs.slice(0,n),Y=ys.slice(0,n);
+ const xl=M.fitMarg(X),yl=M.fitMarg(Y),us=M.ranks(X),vs=M.ranks(Y),cf=M.fitCop(us,vs);
+ m3={X,Y,xl,yl,cf,uv:us.map((u,i)=>[u,vs[i]]),trunc:xs.length>3000};m3err(xs.length>3000?'Using the first 3,000 pairs.':'');schedule();}
+function table(id,list,chosen,isCop){const ok=list.filter(r=>r.ok!==false).sort((a,b)=>a.aic-b.aic);
+ let h='<table><thead><tr><th>Family</th><th>'+(isCop?'Parameter':'Parameters')+'</th><th>AIC</th></tr></thead><tbody>';
+ ok.forEach(r=>{const nm=isCop?M.COP[r.fam].name:M.MARG[r.fam].name;h+='<tr class="'+(r.fam===chosen?'best':'')+'"><td>'+nm+(r.fam===chosen?' ✓':'')+'</td><td class="m">'+(isCop?r.parText:ptext(r.fam,r.p))+'</td><td class="m">'+nf(r.aic)+'</td></tr>';});
+ list.filter(r=>r.ok===false).forEach(r=>{h+='<tr><td>'+M.MARG[r.fam].name+'</td><td colspan="2" class="m">not possible with these values</td></tr>';});
+ $(id).innerHTML=h+'</tbody></table>';return ok;}
+function compute3(){if(!m3)return null;
+ const pick=(sel,list)=>{const v=$(sel).value,ok=list.filter(r=>r.ok!==false).sort((a,b)=>a.aic-b.aic);if(v==='auto')return ok[0];return list.find(r=>r.fam===v&&r.ok!==false)||null;};
+ const rx=pick('m3xf',m3.xl),ry=pick('m3yf',m3.yl);
+ if(!rx||!ry){m3err('That family is not possible for these values: lognormal needs positive values and exponential needs non-negative values.');return null;}
+ const cl=m3.cf.list,v=$('m3cf').value,rc=v==='auto'?[...cl].sort((a,b)=>a.aic-b.aic)[0]:cl.find(r=>r.fam===v);
+ table('m3xtab',m3.xl,rx.fam,false);table('m3ytab',m3.yl,ry.fam,false);table('m3ctab',cl,rc.fam,true);
+ $('m3tau').textContent="Kendall's τ of the data = "+nf(m3.cf.tau)+'. Each family takes its parameter from τ.';
+ if(!m3.trunc)m3err('');
+ const X=M.makeMarg(rx.fam,rx.p),Y=M.makeMarg(ry.fam,ry.p),C=M.makeCop(rc.fam,rc.tau);const how=s=>$(s).value==='auto'?'Lowest AIC of the candidates.':'Family you picked; parameters estimated.';
+ const rows=[
+  {piece:'Marginal of X',st:'estimated',tex:'X\\sim '+X.tex,fb:X.name+' ('+ptext(rx.fam,rx.p)+')',note:how('m3xf')},
+  {piece:'Marginal of Y',st:'estimated',tex:'Y\\sim '+Y.tex,fb:Y.name+' ('+ptext(ry.fam,ry.p)+')',note:how('m3yf')},
+  {piece:'Copula',st:'estimated',text:C.name+' · τ = '+nf(rc.tau)+' · '+C.parText+' · tail dependence: '+C.tails.toLowerCase(),note:how('m3cf')},
+  {piece:'Conditional of Y given X',st:'derived',tex:'f_{Y\\mid X}(y\\mid x)=c\\big(F(x),G(y)\\big)\\,g(y)',fb:'f(y | x) = c(F(x), G(y)) · g(y)'},
+  {piece:'Joint density',st:'derived',tex:'f_{XY}(x,y)=c\\big(F(x),G(y)\\big)\\,f(x)\\,g(y)',fb:'f(x, y) = c(F(x), G(y)) · f(x) · g(y)'}];
+ return {type:'cop',X,Y,C,pts:m3.X.map((x,i)=>[x,m3.Y[i]]),uv:m3.uv,rows,data:true,tau:m3.cf.tau};}
+function example3(){M.seed(7);const C=M.makeCop('clayton',0.5),X=M.makeMarg('normal',{mu:24,v:25}),Y=M.makeMarg('lognormal',{lam:0.5,t2:0.16});
+ let s='temperature,sales\n';for(let i=0;i<300;i++){const p=C.sample();s+=X.inv(p[0]).toFixed(1)+','+Y.inv(p[1]).toFixed(2)+'\n';}$('m3txt').value=s;fitData();}
+
+/* ---------- summary ---------- */
+function renderSummary(){const t=$('sumtab');if(!model){t.innerHTML='<tbody><tr><td>Fix the highlighted fields to complete the model.</td></tr></tbody>';['mt-tau','mt-r','mt-x','mt-y'].forEach(i=>$(i).textContent='–');return;}
+ t.innerHTML='<thead><tr><th>Piece</th><th>Status</th><th>Value</th></tr></thead><tbody></tbody>';const tb=t.querySelector('tbody');
+ model.rows.forEach(r=>{const tr=document.createElement('tr');const a=document.createElement('td');a.textContent=r.piece;const b=document.createElement('td');b.innerHTML='<span class="st '+r.st+'">'+r.st+'</span>';
+  const c=document.createElement('td');const mc=document.createElement('div');mc.className='mathcell';if(r.tex)tex(mc,r.tex,r.fb||r.tex);else mc.textContent=r.text;c.appendChild(mc);
+  if(r.note){const p=document.createElement('div');p.className='mom';p.textContent=r.note;c.appendChild(p);}tr.append(a,b,c);tb.appendChild(tr);});
+ const tau=model.tau!==undefined?model.tau:M.kendall(model.uv.map(p=>p[0]),model.uv.map(p=>p[1]));
+ $('mt-tau').textContent=nf(tau);$('mt-r').textContent=nf(M.pearson(model.pts.map(p=>p[0]),model.pts.map(p=>p[1])));
+ $('mt-x').textContent=nf(model.X.mean)+' · '+nf(model.X.vari);$('mt-y').textContent=nf(model.Y.mean)+' · '+nf(model.Y.vari);}
+
+/* ---------- plots ---------- */
+function segs(g,G,H,lev){const out=[],v=(i,j)=>g[j*G+i];for(let j=0;j<H-1;j++)for(let i=0;i<G-1;i++){const c=[[i,j,v(i,j)],[i+1,j,v(i+1,j)],[i+1,j+1,v(i+1,j+1)],[i,j+1,v(i,j+1)]],q=[];
+ for(let e=0;e<4;e++){const A=c[e],B=c[(e+1)%4];if((A[2]-lev)*(B[2]-lev)<0){const f=(lev-A[2])/(B[2]-A[2]);q.push([A[0]+f*(B[0]-A[0]),A[1]+f*(B[1]-A[1])]);}}
+ if(q.length===2)out.push(q);else if(q.length===4){out.push([q[0],q[1]]);out.push([q[2],q[3]]);}}return out;}
+function quant(a,p){const s=[...a].sort((x,y)=>x-y);return s[Math.floor(p*(s.length-1))];}
+function sizeCanvas(cv,ratio,minH,maxH){const ctx=cv.getContext('2d'),W=cv.clientWidth,H=Math.round(Math.max(minH,Math.min(maxH,W*ratio))),dpr=window.devicePixelRatio||1;cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);return {ctx,W,H};}
+function drawJoint(){const cv=$('cvj');const {ctx,W,H}=sizeCanvas(cv,0.85,360,600);if(!model)return;
+ const fg=css('--fg'),mu=css('--muted'),line=css('--line'),cx=css('--real'),cy=css('--unif'),cj=css('--norm'),acc=css('--accent');
+ const X=model.X,Y=model.Y;let xr=[...X.range],yr=[...Y.range];
+ if(model.data){const xs=model.pts.map(p=>p[0]),ys=model.pts.map(p=>p[1]);xr=[Math.min(xr[0],quant(xs,0.005)),Math.max(xr[1],quant(xs,0.995))];yr=[Math.min(yr[0],quant(ys,0.005)),Math.max(yr[1],quant(ys,0.995))];}
+ const topH=80,sideW=Math.min(90,W*0.17),L=52,R=W-sideW-18,T=topH+24,B=H-38;
+ const XP=x=>L+(R-L)*(x-xr[0])/(xr[1]-xr[0]),YP=y=>B-(B-T)*(y-yr[0])/(yr[1]-yr[0]);
+ const G=96,xs=[],ys=[],Fx=[],fx=[],Gy=[],gy=[];
+ for(let i=0;i<G;i++){const x=xr[0]+(xr[1]-xr[0])*(i+0.5)/G;xs.push(x);Fx.push(X.cdf(x));fx.push(X.pdf(x));}
+ for(let j=0;j<G;j++){const y=yr[0]+(yr[1]-yr[0])*(j+0.5)/G;ys.push(y);if(model.type==='cop'){Gy.push(Y.cdf(y));gy.push(Y.pdf(y));}}
+ const dens=(i,j)=>model.type==='cop'?Math.exp(model.C.logc(Fx[i],Gy[j]))*fx[i]*gy[j]:fx[i]*M.phi((ys[j]-model.a-model.b*xs[i])/model.s)/model.s;
+ const g=new Float64Array(G*G);let tot=0;for(let j=0;j<G;j++)for(let i=0;i<G;i++){let v=dens(i,j);if(!isFinite(v)||v<0)v=0;g[j*G+i]=v;tot+=v;}
+ const sorted=Array.from(g).sort((a,b)=>b-a),ps=[0.25,0.5,0.75,0.9],thr=[];let cum=0,k=0;for(const v of sorted){cum+=v;while(k<ps.length&&cum>=ps[k]*tot){thr.push(v);k++;}if(k>=ps.length)break;}
+ ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T+0.5,R-L,B-T);
+ ctx.save();ctx.beginPath();ctx.rect(L,T,R-L,B-T);ctx.clip();
+ const cw=(R-L)/G,ch=(B-T)/G;
+ if($('shC').checked&&tot>0){for(let j=0;j<G;j++)for(let i=0;i<G;i++){const v=g[j*G+i];let n=0;thr.forEach(t=>{if(v>=t)n++;});if(!n)continue;ctx.fillStyle=rgba(cj,0.05+0.06*n);ctx.fillRect(L+i*cw,B-(j+1)*ch,cw+0.6,ch+0.6);}
+  thr.forEach((t,n)=>{ctx.strokeStyle=rgba(cj,0.5+0.12*n);ctx.lineWidth=1.2+0.3*n;ctx.beginPath();segs(g,G,G,t).forEach(([a,b])=>{ctx.moveTo(L+(a[0]+0.5)*cw,B-(a[1]+0.5)*ch);ctx.lineTo(L+(b[0]+0.5)*cw,B-(b[1]+0.5)*ch);});ctx.stroke();});}
+ if($('shP').checked){ctx.fillStyle=rgba(cx,model.data?0.6:0.35);const step=Math.max(1,Math.floor(model.pts.length/900));for(let q=0;q<model.pts.length;q+=step){const p=model.pts[q];ctx.beginPath();ctx.arc(XP(p[0]),YP(p[1]),model.data?2.2:1.7,0,7);ctx.fill();}}
+ const condMean=x=>{if(model.type==='hier')return model.a+model.b*x;const F=X.cdf(x);let sw=0,swy=0;for(let j=0;j<G;j++){const w=Math.exp(model.C.logc(F,Gy[j]))*gy[j];sw+=w;swy+=w*ys[j];}return sw>0?swy/sw:NaN;};
+ if($('shM').checked){ctx.strokeStyle=fg;ctx.lineWidth=2;ctx.setLineDash([7,4]);ctx.beginPath();let first=true;for(let q=0;q<=70;q++){const x=xr[0]+(xr[1]-xr[0])*q/70,m=condMean(x);if(!isFinite(m))continue;first?ctx.moveTo(XP(x),YP(m)):ctx.lineTo(XP(x),YP(m));first=false;}ctx.stroke();ctx.setLineDash([]);}
+ const x0=xr[0]+(xr[1]-xr[0])*(0.02+0.96*(+$('slx').value)/1000);$('slxo').textContent=nf(x0);
+ if($('shS').checked){const sl=ys.map(y=>model.type==='hier'?M.phi((y-model.a-model.b*x0)/model.s)/model.s:Math.exp(model.C.logc(X.cdf(x0),Y.cdf(y)))*Y.pdf(y));const mx=Math.max(...sl.filter(isFinite));
+  if(mx>0){const amp=(R-L)*0.17;ctx.strokeStyle=acc;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(XP(x0),T);ctx.lineTo(XP(x0),B);ctx.stroke();ctx.fillStyle=rgba(acc,0.18);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(XP(x0),YP(ys[0]));
+   ys.forEach((y,j)=>ctx.lineTo(XP(x0)+amp*(sl[j]||0)/mx,YP(y)));ctx.lineTo(XP(x0),YP(ys[G-1]));ctx.closePath();ctx.fill();ctx.stroke();}}
+ ctx.restore();
+ let fxm=0;for(let i=0;i<=300;i++)fxm=Math.max(fxm,X.pdf(xr[0]+(xr[1]-xr[0])*i/300)||0);
+ const TY=v=>T-8-(topH-10)*Math.min(v,fxm)/(fxm*1.08||1);ctx.fillStyle=rgba(cx,0.22);ctx.strokeStyle=cx;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(L,T-8);
+ for(let i=0;i<=300;i++){const x=xr[0]+(xr[1]-xr[0])*i/300;ctx.lineTo(XP(x),TY(X.pdf(x)||0));}ctx.lineTo(R,T-8);ctx.closePath();ctx.fill();ctx.stroke();
+ const yv=[];for(let i=0;i<=160;i++){const y=yr[0]+(yr[1]-yr[0])*i/160;yv.push([y,Y.pdf(y)||0]);}const fym=Math.max(...yv.map(p=>p[1]));
+ const SR=v=>R+8+(sideW-12)*v/(fym*1.08||1);ctx.fillStyle=rgba(cy,0.22);ctx.strokeStyle=cy;ctx.beginPath();ctx.moveTo(R+8,YP(yr[0]));yv.forEach(([y,v])=>ctx.lineTo(SR(v),YP(y)));ctx.lineTo(R+8,YP(yr[1]));ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.strokeStyle=mu;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,T-8);ctx.lineTo(R,T-8);ctx.moveTo(R+8,T);ctx.lineTo(R+8,B);ctx.stroke();
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';
+ [xr[0],(xr[0]+xr[1])/2,xr[1]].forEach((v,i)=>{const t=nf(v),w=ctx.measureText(t).width;ctx.fillText(t,XP(v)-(i===0?0:i===2?w:w/2),B+15);});
+ [yr[0],(yr[0]+yr[1])/2,yr[1]].forEach(v=>{const t=nf(v),w=ctx.measureText(t).width;ctx.fillText(t,L-w-6,Math.min(B,Math.max(T+10,YP(v)+4)));});
+ ctx.fillStyle=fg;ctx.font='600 13px Manrope, system-ui, sans-serif';ctx.fillText('f(x)',L,14);ctx.fillText('g(y)',R+8,T-12);
+ ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillText('x',R-8,B+30);ctx.fillText('y',L-44,(T+B)/2);}
+function drawCop(){const cv=$('cvc');const {ctx,W,H}=sizeCanvas(cv,1,280,460);if(!model)return;
+ const fg=css('--fg'),mu=css('--muted'),line=css('--line'),cu=css('--unif');
+ const S=Math.min(W-56,H-50),L=40,T=12,R=L+S,B=T+S;ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T+0.5,S,S);
+ ctx.strokeStyle=rgba(mu,0.4);ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(L,B);ctx.lineTo(R,T);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle=rgba(cu,0.45);const step=Math.max(1,Math.floor(model.uv.length/1200));for(let q=0;q<model.uv.length;q+=step){const p=model.uv[q];ctx.beginPath();ctx.arc(L+S*p[0],B-S*p[1],1.7,0,7);ctx.fill();}
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';[0,0.5,1].forEach(v=>{const t=String(v);ctx.fillText(t,L+S*v-ctx.measureText(t).width/2,B+15);ctx.fillText(t,L-ctx.measureText(t).width-6,B-S*v+4);});
+ ctx.fillStyle=fg;ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillText('u = F(x)',R-54,B+30);ctx.save();ctx.translate(L-28,T+70);ctx.rotate(-Math.PI/2);ctx.fillText('v = G(y)',0,0);ctx.restore();}
+
+/* ---------- wiring ---------- */
+function update(){raf=0;model=mode===1?compute1():mode===2?compute2():compute3();renderSummary();drawJoint();drawCop();}
+function schedule(){if(!raf)raf=requestAnimationFrame(update);}
+document.querySelectorAll('.modebtn').forEach(b=>b.addEventListener('click',()=>{mode=+b.dataset.mode;document.querySelectorAll('.modebtn').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+ [1,2,3].forEach(k=>$('m'+k).hidden=k!==mode);if(mode===3&&!m3)example3();schedule();}));
+['m1cf','m3xf','m3yf','m3cf','shC','shP','shM','shS'].forEach(i=>$(i).addEventListener('change',schedule));
+['m1tau','m2a','m2b','m2s','slx'].forEach(i=>$(i).addEventListener('input',schedule));
+$('m2ex').addEventListener('click',()=>{c2x.set('lognormal',{lam:0,t2:0.25});$('m2a').value=0;$('m2b').value=1.5;$('m2s').value=0.09;schedule();});
+$('m3fit').addEventListener('click',fitData);$('m3ex').addEventListener('click',example3);
+document.addEventListener('mj-ready',()=>{mj=true;renderSummary();});
+window.addEventListener('resize',()=>{drawJoint();drawCop();});
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{drawJoint();drawCop();});}catch(e){}
+new MutationObserver(()=>{drawJoint();drawCop();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{drawJoint();drawCop();});
+update();
+})();
+</script>
+</body>
+</html>
