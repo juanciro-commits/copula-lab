@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Copula Lab</title>
+<script>
+window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['\\[','\\]']]},svg:{fontCache:'none'},options:{enableMenu:false},
+ startup:{ready:function(){MathJax.startup.defaultReady();MathJax.startup.promise.then(function(){document.dispatchEvent(new Event('mj-ready'));});}}};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg-full.min.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -12,16 +17,19 @@
 :root{
   --bg:#F3F5F8; --surface:#FFFFFF; --line:#D5DBE5; --fg:#18202E; --muted:#5A6577;
   --real:#6A5FD3; --unif:#13896B; --norm:#D2602F; --accent:#2F4A8A;
+  --b1:#13896B; --b2:#6A5FD3; --b3:#D2602F; --b4:#B07A12; --b5:#C2457A;
   --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body:"Manrope", "Segoe UI", system-ui, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10141C; --surface:#181E29; --line:#2C3545; --fg:#E6EAF2; --muted:#9AA5B8;
-  --real:#A39BF0; --unif:#4CC9A3; --norm:#F08A5D; --accent:#8FA9EA; color-scheme:dark}}
+  --real:#A39BF0; --unif:#4CC9A3; --norm:#F08A5D; --accent:#8FA9EA;
+  --b1:#4CC9A3; --b2:#A39BF0; --b3:#F08A5D; --b4:#E0B04A; --b5:#EC7EAA; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10141C; --surface:#181E29; --line:#2C3545; --fg:#E6EAF2; --muted:#9AA5B8;
-  --real:#A39BF0; --unif:#4CC9A3; --norm:#F08A5D; --accent:#8FA9EA; color-scheme:dark}
+  --real:#A39BF0; --unif:#4CC9A3; --norm:#F08A5D; --accent:#8FA9EA;
+  --b1:#4CC9A3; --b2:#A39BF0; --b3:#F08A5D; --b4:#E0B04A; --b5:#EC7EAA; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
 .wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 48px;display:flex;flex-direction:column;gap:22px}
@@ -48,6 +56,8 @@ select:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid 
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
 .metric{border-top:3px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:2px}
 .metric.real{border-color:var(--real)} .metric.norm{border-color:var(--norm)} .metric.unif{border-color:var(--unif)}
+.metric.line{border-color:var(--fg)}
+.metric .mono-sub{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:2px}
 .metric span{font-size:13px;color:var(--muted)}
 .metric strong{font-family:var(--mono);font-weight:500;font-size:24px;font-variant-numeric:tabular-nums}
 .metric strong.small{font-size:17px;padding-top:5px}
@@ -63,6 +73,74 @@ table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
 td.m{font-family:var(--mono);white-space:nowrap}
+nav.tabs{display:flex;gap:8px;flex-wrap:wrap}
+nav.tabs a{font-weight:600;font-size:14px;color:var(--accent);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--surface)}
+nav.tabs a:hover{border-color:var(--accent)}
+.sect{display:flex;flex-direction:column;gap:18px;border-top:1px solid var(--line);padding-top:26px}
+.sect h2.big{font-family:var(--display);font-weight:700;font-size:clamp(22px,3vw,30px);margin:0}
+.formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.fbox{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:10px 14px;min-width:0}
+.fbox span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;margin-bottom:4px}
+.fbox code{font-family:var(--mono);font-size:15px;color:var(--fg);white-space:normal;overflow-wrap:anywhere}
+.fbox p{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.tcanvas{max-width:680px;margin:0 auto}
+.tip{cursor:help;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--muted)}
+.tip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.tiphint{font-size:13px;color:var(--muted);margin:0}
+#tipbox{position:fixed;z-index:50;width:max-content;max-width:min(380px, calc(100vw - 32px));background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:0 10px 28px rgba(10,15,25,.22);font-size:14px;line-height:1.5;pointer-events:none;text-transform:none;letter-spacing:0;font-weight:400}
+#tipbox b.tt{display:block;font-family:var(--display);font-size:16px;margin-bottom:4px}
+#tipbox p{margin:0 0 8px}
+#tipbox p:last-child{margin-bottom:0}
+#tipbox .eq{overflow-x:auto;margin:6px 0 8px}
+#tipbox mjx-container[display="true"]{margin:4px 0 !important}
+.fbox.wide{grid-column:1/-1}
+.fbox .math{font-size:16px;color:var(--fg);overflow-x:auto;overflow-y:hidden;min-height:28px;padding-top:2px}
+.fbox .math mjx-container{margin:0 !important}
+.plothead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 10px}
+.exchip{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;color:var(--accent);background:var(--bg);border:1px solid var(--accent);border-radius:999px;padding:5px 12px;text-decoration:none}
+.exchip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+#tipbox .ex dt{font-weight:600;margin-top:6px}
+#tipbox .ex dd{margin:0}
+#tipbox .set{font-family:var(--mono);font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:6px;margin-top:8px}
+.strength{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:22px}
+.strength-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;align-items:start}
+.strength-text{min-width:0}
+.strength-text p{margin:0 0 10px;max-width:65ch}
+.eqline{overflow-x:auto;margin:4px 0 10px}
+.small-note{font-size:13px;color:var(--muted)}
+.strength-tbl{min-width:0}
+.strength-tbl td,.strength-tbl th{white-space:nowrap}
+.strength-tbl td:nth-child(3){white-space:normal;min-width:150px}
+.examples{display:flex;flex-direction:column;gap:10px}
+.examples h2{margin:0}
+.excards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.excard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.excard h3{font-family:var(--display);font-size:17px;margin:0;text-wrap:balance}
+.excard .kind{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.excard .vars{display:flex;flex-wrap:wrap;gap:6px}
+.excard .vars span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--muted)}
+.excard p{margin:0;font-size:14px}
+.excard .see{color:var(--muted);font-size:13px}
+.excard button{margin-top:auto}
+.excard.active{border-color:var(--accent)}
+pre.code{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.5;margin:0 0 8px;color:var(--fg)}
+#jcopy{width:auto}
+.reftbl table{font-size:14px}
+.reftbl td{vertical-align:middle}
+.reftbl td:first-child{white-space:nowrap}
+.reftbl td.m{font-size:12px;white-space:nowrap}
+.reftbl mjx-container{margin:0 !important}
+.quiz{background:var(--surface);border:1px dashed var(--accent);border-radius:10px;padding:10px 14px}
+.quiz.after{border-style:solid;border-color:var(--line);border-left:4px solid var(--unif)}
+.quiz>summary{cursor:pointer;font-weight:600;font-size:15px;list-style-position:outside}
+.quiz>summary:focus-visible,.qa>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.qtag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--bg);background:var(--accent);border-radius:4px;padding:2px 6px;margin-right:4px}
+.quiz.after .qtag{background:var(--unif)}
+.qn{color:var(--muted);font-weight:500}
+.qhelp{margin:8px 0 4px;font-size:13px;color:var(--muted)}
+.qa{border-top:1px solid var(--line);padding:8px 0}
+.qa>summary{cursor:pointer;max-width:72ch}
+.qa>p{margin:6px 0 0 18px;max-width:70ch;color:var(--fg);background:var(--bg);border-radius:6px;padding:8px 10px}
 footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
@@ -70,11 +148,82 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Stochastic methods · bivariate copulas</div>
+    <div class="eyebrow">Stochastic methods · from transformations to copulas</div>
     <h1>Copula Lab</h1>
-    <p class="lede">Choose how each variable behaves on its own (its marginal) and how the two are related (the copula). The copula separates the two: <span class="formula">H(x, y) = C[F(x), G(y)]</span>. Change the distributions and only the first plot changes; change the family or the strength and all three change.</p>
+    <p class="lede">A guided path in four steps. Each one uses the tool built in the step before: turning any variable into a uniform, combining two variables into a joint density, separating the marginals from the dependence with a copula, and measuring how strong that dependence is.</p>
+    <nav class="tabs" aria-label="Sections"><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a></nav>
   </header>
 
+  <section class="sect" id="transformations">
+    <div class="eyebrow">Step 1 · Probability integral transform</div>
+    <h2 class="big">Transformations: any distribution into a uniform</h2>
+    <p class="lede">Start here: every copula is built on this tool. Pass a variable through its own cdf, <span class="formula">U = F(Y)</span>, and the result is always Uniform(0, 1). The distribution of Y sits on top, sharing the horizontal y axis; the cdf in the middle is drawn the usual way, with y across and u = F(y) up; and the uniform sits on the right, sharing the vertical u axis. Each color holds 20% of the probability on both sides.</p>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>Take any list of exam scores and replace each score with its percentile. What shape would a histogram of the percentiles have?</summary><p>Flat. Every 10% slice of percentiles holds exactly 10% of the students, whatever the shape of the original scores. That flat shape is a Uniform(0, 1).</p></details><details class="qa"><summary>Can a probability be larger than 1? Can a density?</summary><p>A probability, never. A density, yes: a Uniform(0, 0.25) has height 4, because only the area has to equal 1.</p></details><details class="qa"><summary>Most exponential values sit near 0. To give every 20% of the probability the same amount of space, which part of the axis must be stretched?</summary><p>The crowded part near 0 gets stretched and the long right tail gets squeezed.</p></details></details>
+    <div class="controls">
+      <div class="ctl"><label for="tdist">Distribution of Y</label><select id="tdist"></select></div>
+      <div class="ctl"><label for="ty">Follow one value of y</label>
+        <div class="range"><input type="range" id="ty" min="0" max="1000" step="1" value="350"><output id="tyout">–</output></div></div>
+      <div class="ctl"><label for="tanim">Send 400 samples through F</label><button id="tanim" type="button">Animate</button></div>
+    </div>
+    <div class="formulas">
+      <div class="fbox"><span class="tip" tabindex="0" data-tip="t-pdf">pdf</span><div class="math" id="fpdf"></div></div>
+      <div class="fbox wide"><span class="tip" tabindex="0" data-tip="t-cdf">cdf (closed form)</span><div class="math" id="fcdf"></div><p id="fnote"></p></div>
+      <div class="fbox"><span class="tip" tabindex="0" data-tip="t-inv">Inverse, the way back</span><div class="math" id="finv"></div></div>
+      <div class="fbox wide"><span class="tip" tabindex="0" data-tip="t-val">This value</span><div class="math" id="fval"></div></div>
+    </div>
+    <div class="plot"><canvas id="tcv" class="tcanvas" aria-label="pdf of Y on the left, its cdf in the center and the uniform pdf on top, with five bands of equal probability"></canvas></div>
+    <p class="lede">Where the pdf of Y is tall, its bands are narrow and the cdf climbs steeply, stretching them over a lot of u; where the pdf is low, the bands are wide and the cdf is nearly flat, squeezing them. After the transform every band is 0.2 tall, so the histogram on the right fills up flat at height 1.</p>
+      <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>What function turns any continuous Y into a Uniform(0, 1)?</summary><p>Its own cdf: \(U=F(Y)\).</p></details><details class="qa"><summary>For an exponential with \(\theta=1\), what is \(u\) when \(y=1\)?</summary><p>\(u=1-e^{-1}\approx 0.63\): the value 1 is at the 63rd percentile.</p></details><details class="qa"><summary>Why does the cdf climb steeply exactly where the pdf is tall?</summary><p>Because the slope of the cdf is the pdf: \(F'(y)=f(y)\). Where a lot of probability sits, the accumulated probability grows fast.</p></details></details>
+  </section>
+
+  <section class="sect" id="joint">
+    <div class="eyebrow">Step 2 · Two variables at once</div>
+    <h2 class="big">Level sets: a lognormal X and a normal Y given X</h2>
+    <p class="lede">Before separating marginals from dependence, see how two variables combine into one joint density. This is the model from the board: first choose how X behaves on its own, then how Y behaves once X is known. Multiplying the two layers gives the joint density, <span class="formula">f<sub>XY</sub>(x, y) = f<sub>Y|X</sub>(y | x) · f<sub>X</sub>(x)</span>, and its level sets are the rings where that density is constant.</p>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>On a topographic map, what does each contour line connect?</summary><p>Points at the same height. Here the height is the joint density, so each ring connects pairs \((x,y)\) that are equally likely.</p></details><details class="qa"><summary>If you know a father's height, does it change your best guess for his son's height?</summary><p>Yes. That updated guess is a conditional distribution, \(f_{Y\mid X}(y\mid x)\).</p></details><details class="qa"><summary>Income cannot be negative and has a long right tail. Is a normal a good model for it?</summary><p>No. A lognormal fits better: always positive and skewed to the right.</p></details></details>
+    <div class="controls">
+      <div class="ctl"><label for="jxd">Distribution of X</label>
+        <select id="jxd"><option value="l">Lognormal(λ, τ²)</option><option value="n">Normal with the same mean and variance</option></select></div>
+      <div class="ctl"><label for="jl">λ: mean of ln X</label><div class="range"><input type="range" id="jl" min="-0.5" max="1" step="0.05" value="0"><output id="jlo">0.00</output></div></div>
+      <div class="ctl"><label for="jt">τ: spread of ln X (not Kendall's τ)</label><div class="range"><input type="range" id="jt" min="0.1" max="1" step="0.05" value="0.5"><output id="jto">0.50</output></div></div>
+      <div class="ctl"><label for="ja">α: intercept of μ(x)</label><div class="range"><input type="range" id="ja" min="-2" max="2" step="0.1" value="0"><output id="jao">0.0</output></div></div>
+      <div class="ctl"><label for="jb">β: slope of μ(x)</label><div class="range"><input type="range" id="jb" min="-1.5" max="1.5" step="0.1" value="1"><output id="jbo">1.0</output></div></div>
+      <div class="ctl"><label for="js">σ: spread of Y around μ(x)</label><div class="range"><input type="range" id="js" min="0.1" max="1.5" step="0.05" value="0.5"><output id="jso">0.50</output></div></div>
+      <div class="ctl"><label for="jx0">Slice at x</label><div class="range"><input type="range" id="jx0" min="0" max="1000" step="1" value="350"><output id="jx0o">–</output></div></div>
+      <div class="ctl"><span class="lbl">Show</span>
+        <div class="checks"><label class="chk" for="jc"><input type="checkbox" id="jc" checked> Level sets</label>
+        <label class="chk" for="jp"><input type="checkbox" id="jp"> Sample points</label>
+        <label class="chk" for="jm"><input type="checkbox" id="jm" checked> Line μ(x)</label>
+        <label class="chk" for="jsl"><input type="checkbox" id="jsl" checked> Slice f(y | x)</label></div></div>
+      <div class="ctl"><label for="jreset">Board example</label><button id="jreset" type="button">λ = 0, τ = 0.5, μ(x) = x, σ = 0.5</button></div>
+    </div>
+    <div class="formulas">
+      <div class="fbox wide"><span class="tip" tabindex="0" data-tip="t-jfx">Layer 1: marginal of X</span><div class="math" id="jfx"></div></div>
+      <div class="fbox wide"><span class="tip" tabindex="0" data-tip="t-jfy">Layer 2: conditional of Y given X</span><div class="math" id="jfy"></div></div>
+      <div class="fbox wide"><span class="tip" tabindex="0" data-tip="t-jxy">Joint density and level sets</span><div class="math" id="jxy"></div></div>
+    </div>
+    <div class="plot"><canvas id="jcv" class="tcanvas" aria-label="Joint density of X and Y with level sets, the marginal of X on top, the marginal of Y on the right and a conditional slice"></canvas></div>
+    <div class="guide">
+      <section>
+        <h2>How to read it</h2>
+        <p><b>Top:</b> the pdf of X, layer 1. <b>Center:</b> the level sets of the joint density; inner rings are where pairs are most likely. <b>Right:</b> the marginal pdf of Y, obtained by adding up the joint density across all x.</p>
+        <p><b>The slice:</b> at the chosen x, the bell drawn sideways is f(y | x), layer 2. It is always a normal with the same width σ; only its center μ(x) moves along the line.</p>
+        <p><b>Lognormal vs. normal X:</b> with a normal X the rings are ellipses (a bivariate normal). With a lognormal X, same mean and variance, the rings become teardrops packed near small x and stretched to the right.</p>
+      </section>
+      <section>
+        <h2>Python, matching these settings</h2>
+        <pre class="code" id="jcode"></pre>
+        <button id="jcopy" type="button">Copy code</button>
+      </section>
+    </div>
+      <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>Write the joint density in terms of the two layers.</summary><p>\(f_{XY}(x,y)=f_{Y\mid X}(y\mid x)\,f_X(x)\): conditional times marginal.</p></details><details class="qa"><summary>With a normal X the level sets are ellipses. What shape do they take with a lognormal X?</summary><p>Teardrops: packed near small values of x and stretched to the right, following the skew of the lognormal.</p></details><details class="qa"><summary>What happens to the level sets when \(\beta=0\)?</summary><p>Y no longer depends on X, so the rings stop tilting: the line \(\mu(x)\) is flat.</p></details></details>
+  </section>
+
+  <section class="sect" id="copulas">
+    <div class="eyebrow">Step 3 · Copulas</div>
+    <h2 class="big">Copulas: separating the marginals from the dependence</h2>
+    <p class="lede">Now put the two previous steps together. Choose how each variable behaves on its own (its marginal) and how the two are related (the copula). Sklar's theorem says any joint distribution splits this way: <span class="formula">H(x, y) = C[F(x), G(y)]</span>. Plot 2 is step 1 applied to both variables at once. Change the distributions and only plot 1 changes; change the family or the strength and all three change.</p>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>Two variables have a correlation of 0.3. Does that tell you whether their extreme values happen together?</summary><p>No. One number cannot say where the dependence sits; two pairs with the same correlation can behave very differently in the tails.</p></details><details class="qa"><summary>If you record sales in thousands of dollars instead of dollars, should the relationship with temperature change?</summary><p>No. Changing units, or any transformation that keeps the order, leaves the relationship intact. The copula captures exactly that.</p></details><details class="qa"><summary>Do big floods in two neighboring cities happen together more often than small ones?</summary><p>Usually yes: a big storm hits both. That is upper-tail dependence, which the Gumbel copula models.</p></details></details>
   <div class="controls">
     <div class="ctl"><label for="fam">Copula (tail dependence)</label>
       <select id="fam">
@@ -86,27 +235,36 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       </select></div>
     <div class="ctl"><label for="dx">Distribution of X</label><select id="dx"></select></div>
     <div class="ctl"><label for="dy">Distribution of Y</label><select id="dy"></select></div>
-    <div class="ctl"><label for="tau">Strength: Kendall's τ</label>
+    <div class="ctl"><label for="tau"><span class="tip" tabindex="0" data-tip="t-strength">Strength: Kendall's τ</span></label>
       <div class="range"><input type="range" id="tau" min="-0.9" max="0.9" step="0.05" value="0.5"><output id="tout">0.50</output></div></div>
     <div class="ctl"><label for="b">Sample of 2,000 pairs</label><button id="b" type="button">Draw a new sample</button></div>
     <div class="ctl"><span class="lbl">Show</span>
       <div class="checks"><label class="chk" for="showC"><input type="checkbox" id="showC" checked> Level curves</label>
-      <label class="chk" for="showP"><input type="checkbox" id="showP" checked> Points</label></div></div>
+      <label class="chk" for="showP"><input type="checkbox" id="showP" checked> Points</label>
+      <label class="chk" for="showL"><input type="checkbox" id="showL" checked> Regression line</label></div></div>
   </div>
 
+  <p class="tiphint">Hover over (or tap) any dotted label to see what it measures and its formula.</p>
   <div class="metrics">
-    <div class="metric real"><span>Classic correlation (Pearson), original scale</span><strong id="p1">–</strong></div>
-    <div class="metric norm"><span>Pearson on the normal scale</span><strong id="p2">–</strong></div>
-    <div class="metric unif"><span>Sample Kendall's τ</span><strong id="k">–</strong></div>
-    <div class="metric"><span>Family parameter</span><strong id="par" class="small">–</strong></div>
+    <div class="metric real"><span class="tip" tabindex="0" data-tip="t-pear">Classic correlation (Pearson), original scale</span><strong id="p1">–</strong></div>
+    <div class="metric norm"><span class="tip" tabindex="0" data-tip="t-pn">Pearson on the normal scale</span><strong id="p2">–</strong></div>
+    <div class="metric unif"><span class="tip" tabindex="0" data-tip="t-tau">Sample Kendall's τ</span><strong id="k">–</strong></div>
+    <div class="metric"><span class="tip" tabindex="0" data-tip="t-par">Family parameter</span><strong id="par" class="small">–</strong></div>
+    <div class="metric line"><span class="tip" tabindex="0" data-tip="t-reg">Least-squares line, plot 1</span><strong id="reg" class="small">–</strong><span id="regb" class="mono-sub"></span></div>
   </div>
 
-  <div class="plot"><canvas id="cv" aria-label="Three scatter plots with marginal histograms: original scale, uniforms and normal scale"></canvas></div>
+  <div class="plot"><div class="plothead"><span class="tip exchip" tabindex="0" id="exchip" data-tip="t-ex-g">Example · <b id="exname">Gaussian</b></span><span class="tiphint">Hover for a real-world story that fits this copula.</span></div><canvas id="cv" aria-label="Three scatter plots with marginal histograms: original scale, uniforms and normal scale"></canvas></div>
+  <section class="examples" aria-labelledby="exhead">
+    <h2 id="exhead">Examples for the <span id="exfam">Gaussian</span> copula</h2>
+    <p class="tiphint">Each example sets X, Y and the strength for you. Change the copula above to see examples for another family.</p>
+    <div id="excards" class="excards"></div>
+  </section>
 
   <div class="guide">
     <section>
       <h2>How to read the three plots</h2>
       <p class="key"><span class="dot" style="background:var(--real)"></span><span><b>1. Original scale.</b> The pairs as observed. Above and to the side, the distributions chosen for X and Y. Pearson is computed here and depends on those shapes.</span></p>
+      <p class="key"><span class="dot" style="background:var(--fg)"></span><span><b>Least-squares line.</b> The straight line through plot 1, <span class="formula">ŷ = b₀ + b₁x</span>, with slope <span class="formula">b₁ = r · s<sub>y</sub> / s<sub>x</sub></span>, where r is the Pearson correlation. It describes only the linear part of the relationship, so it fits poorly when the cloud bends or the marginals are skewed, even when the copula is strong.</span></p>
       <p class="key"><span class="dot" style="background:var(--unif)"></span><span><b>2. Uniforms.</b> Each variable passed through its own cdf: <span class="formula">u = F(x)</span>, <span class="formula">v = G(y)</span>. The histograms are always flat; all that remains is how the points pair up. This cloud is the copula.</span></p>
       <p class="key"><span class="dot" style="background:var(--norm)"></span><span><b>3. Normal scale.</b> The same copula under a magnifying glass: <span class="formula">z = Φ⁻¹(u)</span>. The Gaussian gives ellipses; the other families bend the ellipse in their tails.</span></p>
       <p class="key"><span class="dot" style="background:var(--muted)"></span><span><b>Level curves.</b> Each ring joins points of equal estimated density, like the contour lines of a topographic map. Inner rings mark where pairs are most crowded. They are estimated from the sample, so they wobble a little from one draw to the next.</span></p>
@@ -125,13 +283,97 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       <p style="margin-top:10px;color:var(--muted)">Clayton and Gumbel only model positive dependence; for negative τ their rotated version is used (v → 1 − v).</p>
     </section>
   </div>
+      <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>What does plot 2 (uniforms) show that plot 1 does not?</summary><p>Only the dependence. Both marginals have been flattened into uniforms, so the shape of each variable is gone and only the way the points pair up remains.</p></details><details class="qa"><summary>Which family packs the dependence into the lower-left corner? Which into the upper-right?</summary><p>Clayton into the lower-left (lows together); Gumbel into the upper-right (highs together).</p></details><details class="qa"><summary>You change Y from Normal to Lognormal. Which plots and numbers change?</summary><p>Only plot 1 and the classic Pearson correlation. Plots 2 and 3 and Kendall's \(\tau\) stay the same, because the order of the data did not change.</p></details></details>
+  </section>
+
+<section class="sect" id="strength">
+    <div class="eyebrow">Step 4 · Measuring dependence</div>
+    <h2 class="big">The strength control: Kendall's τ</h2>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>Pick two days at random. With a perfect positive relationship, how often would the hotter day also have higher sales?</summary><p>Always: 100% of the time.</p></details><details class="qa"><summary>And with no relationship at all?</summary><p>Half the time, like a coin flip: 50%.</p></details><details class="qa"><summary>Is \(\theta=2\) in Clayton exactly as strong as \(\theta=2\) in Frank?</summary><p>No. Each family's parameter has its own scale, which is why the lab uses Kendall's \(\tau\) as a common scale.</p></details></details>
+    <div class="strength-grid">
+      <div class="strength-text">
+        <p>Every family has its own parameter on its own scale: ρ for the Gaussian, θ for Clayton, Gumbel and Frank. The same number means different things in each, so the slider uses one common measure instead, Kendall's τ, and the page converts it to each family's parameter (shown in <b>Family parameter</b>).</p>
+        <p>That keeps the total strength fixed when you switch families, so the only thing that changes in the plots is <em>where</em> the dependence concentrates. It also ignores the marginals, because it uses only the order of the data.</p>
+        <p><b>How to read it.</b> Pick two observations at random, for example two days. τ compares the chance that they move in the same direction with the chance that they move in opposite directions:</p>
+        <div class="eqline">\[ \tau=P(\text{same direction})-P(\text{opposite}),\qquad P(\text{same direction})=\frac{1+\tau}{2} \]</div>
+        <p class="small-note">The strength labels are a common rule of thumb, not fixed thresholds; what counts as strong depends on the field.</p>
+      </div>
+      <div class="tbl strength-tbl">
+        <table>
+          <thead><tr><th>τ</th><th>Two days move the same way</th><th>Reading</th><th>Gaussian ρ</th><th>Clayton θ</th><th>Gumbel θ</th><th>Frank θ</th></tr></thead>
+          <tbody>
+            <tr><td class="m">−0.5</td><td class="m">25%</td><td>Moderate, negative</td><td class="m">−0.71</td><td class="m">rotated</td><td class="m">rotated</td><td class="m">−5.74</td></tr>
+            <tr><td class="m">0</td><td class="m">50%</td><td>No relationship (a coin flip)</td><td class="m">0</td><td class="m">0</td><td class="m">1</td><td class="m">0</td></tr>
+            <tr><td class="m">0.1</td><td class="m">55%</td><td>Negligible to weak</td><td class="m">0.16</td><td class="m">0.22</td><td class="m">1.11</td><td class="m">0.91</td></tr>
+            <tr><td class="m">0.3</td><td class="m">65%</td><td>Weak to moderate</td><td class="m">0.45</td><td class="m">0.86</td><td class="m">1.43</td><td class="m">2.92</td></tr>
+            <tr><td class="m">0.5</td><td class="m">75%</td><td>Moderate to strong</td><td class="m">0.71</td><td class="m">2.00</td><td class="m">2.00</td><td class="m">5.74</td></tr>
+            <tr><td class="m">0.7</td><td class="m">85%</td><td>Strong</td><td class="m">0.89</td><td class="m">4.67</td><td class="m">3.33</td><td class="m">11.41</td></tr>
+            <tr><td class="m">0.9</td><td class="m">95%</td><td>Very strong, almost a perfect order</td><td class="m">0.99</td><td class="m">18.0</td><td class="m">10.0</td><td class="m">38.28</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+      <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>If \(\tau=0.6\), how often do two random observations move in the same direction?</summary><p>\(\frac{1+0.6}{2}=0.80\), so 80% of the time.</p></details><details class="qa"><summary>What Clayton parameter corresponds to \(\tau=0.5\)?</summary><p>\(\theta=\frac{2\tau}{1-\tau}=\frac{1}{0.5}=2\).</p></details><details class="qa"><summary>Why does \(\tau\) stay the same when the marginals change, while Pearson does not?</summary><p>\(\tau\) uses only the order of the data, and changing the marginals never changes the order. Pearson uses the actual values, so it does.</p></details></details>
+  </section>
+
+
+<section class="sect" id="reference">
+    <div class="eyebrow">Reference</div>
+    <h2 class="big">The six distributions in this lab</h2>
+    <p class="lede">Every selector on the page uses the same six distributions. Each one is here for a reason, and together they cover what the course needs: a reference shape, the destination of the transform, closed and non-closed cdfs, money-like skew, two peaks and heavy tails.</p>
+    <h2>Why each one is here</h2>
+    <div class="tbl reftbl"><table>
+      <thead><tr><th>Distribution</th><th>Why it is in the lab</th><th>Where it shines</th></tr></thead>
+      <tbody>
+        <tr><td><b>Normal</b></td><td>The reference for everything: ellipses, the function \(\Phi\), and the normal scale of copula plot 3.</td><td>Every step</td></tr>
+        <tr><td><b>Uniform (0, 1)</b></td><td>The destination of the transform. Its cdf is the line \(F(y)=y\), so nothing moves; it works as the control case.</td><td>Steps 1 and 3</td></tr>
+        <tr><td><b>Exponential</b></td><td>Both its cdf and its inverse have closed forms, and you already derived its mean and variance in problem set 5.</td><td>Step 1: the clearest transform</td></tr>
+        <tr><td><b>Lognormal</b></td><td>The distribution from the board (question 3). It models money: sales, income, losses.</td><td>Steps 2 and 3</td></tr>
+        <tr><td><b>Bimodal</b></td><td>Two peaks in the original scale, yet the copula looks exactly the same: proof that the copula ignores the shape of the marginals.</td><td>Step 3</td></tr>
+        <tr><td><b>Student t</b></td><td>Heavy tails. It connects to the t copula and shows why some distributions have no mgf.</td><td>Step 3 and this table</td></tr>
+      </tbody></table></div>
+    <h2>Formulas and moments</h2>
+    <p class="tiphint">Parameters are the ones the page uses; general forms are in parentheses where they help. "Does not exist" means \(E[e^{tY}]=\infty\) for every \(t&gt;0\): the tails are too heavy.</p>
+    <div class="tbl reftbl"><table>
+      <thead><tr><th>Distribution</th><th>Support</th><th>pdf \(f(y)\)</th><th>cdf \(F(y)\)</th><th>\(E[Y]\)</th><th>\(V(Y)\)</th><th>mgf \(M(t)=E[e^{tY}]\)</th><th>Business example</th><th>Python (scipy.stats)</th></tr></thead>
+      <tbody>
+        <tr><td><b>Normal</b><br>\((\mu=0,\ \sigma=1)\)</td><td>\(\mathbb{R}\)</td><td>\(\dfrac{1}{\sqrt{2\pi}}e^{-y^2/2}\)</td><td>\(\Phi(y)\), no closed form</td><td>\(0\)</td><td>\(1\)</td><td>\(e^{t^2/2}\)<br>\(\left(e^{\mu t+\sigma^2t^2/2}\right)\)</td><td>Heights, exam scores, measurement error</td><td class="m">norm()</td></tr>
+        <tr><td><b>Uniform</b><br>\((0,1)\)</td><td>\([0,1]\)</td><td>\(1\)</td><td>\(y\)</td><td>\(\tfrac12\)</td><td>\(\tfrac{1}{12}\)</td><td>\(\dfrac{e^{t}-1}{t},\ t\neq0\)</td><td>Percentiles, a random point in a time window</td><td class="m">uniform()</td></tr>
+        <tr><td><b>Exponential</b><br>\((\theta=1)\)</td><td>\(y\ge0\)</td><td>\(\theta e^{-\theta y}\)</td><td>\(1-e^{-\theta y}\)</td><td>\(\tfrac{1}{\theta}\)</td><td>\(\tfrac{1}{\theta^2}\)</td><td>\(\dfrac{\theta}{\theta-t},\ t&lt;\theta\)</td><td>Time between customers, waiting times</td><td class="m">expon(scale=1/θ)</td></tr>
+        <tr><td><b>Lognormal</b><br>\((\lambda=0,\ \tau=0.6)\)</td><td>\(y&gt;0\)</td><td>\(\dfrac{1}{y\tau\sqrt{2\pi}}e^{-\frac{(\ln y-\lambda)^2}{2\tau^2}}\)</td><td>\(\Phi\!\left(\frac{\ln y-\lambda}{\tau}\right)\), no closed form</td><td>\(e^{\lambda+\tau^2/2}\)</td><td>\((e^{\tau^2}-1)\,e^{2\lambda+\tau^2}\)</td><td>Does not exist</td><td>Sales, income, insurance losses</td><td class="m">lognorm(s=τ, scale=e^λ)</td></tr>
+        <tr><td><b>Bimodal</b><br>\(\tfrac12 N(-2,0.7^2)+\tfrac12 N(2,0.7^2)\)</td><td>\(\mathbb{R}\)</td><td>\(\tfrac12\frac{\varphi\left(\frac{y+2}{0.7}\right)}{0.7}+\tfrac12\frac{\varphi\left(\frac{y-2}{0.7}\right)}{0.7}\)</td><td>\(\tfrac12\Phi\!\left(\frac{y+2}{0.7}\right)+\tfrac12\Phi\!\left(\frac{y-2}{0.7}\right)\)</td><td>\(0\)</td><td>\(0.7^2+2^2=4.49\)</td><td>\(\tfrac12e^{-2t+0.245t^2}+\tfrac12e^{2t+0.245t^2}\)</td><td>Two customer types, deliveries from two warehouses</td><td class="m">mixture of two norm(), no single object</td></tr>
+        <tr><td><b>Student t</b><br>\((\nu=3)\)</td><td>\(\mathbb{R}\)</td><td>\(\dfrac{6\sqrt3}{\pi(3+y^2)^2}\)</td><td>\(\tfrac12+\tfrac1\pi\!\left[\frac{y/\sqrt3}{1+y^2/3}+\arctan\frac{y}{\sqrt3}\right]\)</td><td>\(0\)</td><td>\(\dfrac{\nu}{\nu-2}=3\)</td><td>Does not exist</td><td>Daily stock returns, prices with crashes</td><td class="m">t(df=3)</td></tr>
+      </tbody></table></div>
+  </section>
+
+<div id="tiptpl" hidden>
+    <div data-id="t-pear"><b class="tt">Classic correlation (Pearson)</b><p>Linear correlation of the pairs exactly as observed in plot 1. It measures how close the cloud is to a straight line, so it depends on the shapes of the marginals.</p><div class="eq">\[ r=\frac{\sum_i (x_i-\bar x)(y_i-\bar y)}{\sqrt{\sum_i (x_i-\bar x)^2\,\sum_i (y_i-\bar y)^2}} \]</div><p>Reading: \(r^2\) is the share of the variance of \(Y\) that a straight line in \(X\) explains.</p></div>
+    <div data-id="t-pn"><b class="tt">Pearson on the normal scale</b><p>The same formula, applied to the normal scores of plot 3. Since those marginals are always normal, it depends only on the copula.</p><div class="eq">\[ z_{1i}=\Phi^{-1}(u_i),\quad z_{2i}=\Phi^{-1}(v_i),\quad \rho_N=\operatorname{corr}(z_1,z_2) \]</div><p>For a Gaussian copula it equals its parameter: \(\rho=\sin\!\left(\frac{\pi\tau}{2}\right)\).</p></div>
+    <div data-id="t-tau"><b class="tt">Kendall's \(\tau\)</b><p>Uses only the order of the data. For every pair of observations, it checks whether they move in the same direction (concordant) or in opposite directions (discordant).</p><div class="eq">\[ \tau=\frac{C-D}{C+D},\qquad P(\text{same direction})=\frac{1+\tau}{2} \]</div><p>It is the same on all three plots, which makes it the natural measure of the copula's strength.</p></div>
+    <div data-id="t-par"><b class="tt">Family parameter</b><p>The number that sets the strength inside each copula formula, obtained from \(\tau\):</p><div class="eq">\[ \begin{aligned} &\text{Gaussian, } t: && \rho=\sin\!\left(\tfrac{\pi\tau}{2}\right)\\ &\text{Clayton:} && \theta=\tfrac{2\tau}{1-\tau},\quad C(u,v)=\left(u^{-\theta}+v^{-\theta}-1\right)^{-1/\theta}\\ &\text{Gumbel:} && \theta=\tfrac{1}{1-\tau},\quad C(u,v)=e^{-\left[(-\ln u)^{\theta}+(-\ln v)^{\theta}\right]^{1/\theta}}\\ &\text{Frank:} && \tau=1-\tfrac{4}{\theta}\left[1-D_1(\theta)\right] \end{aligned} \]</div><p>For negative \(\tau\), Clayton and Gumbel are rotated: \(v\to 1-v\).</p></div>
+    <div data-id="t-reg"><b class="tt">Least-squares line</b><p>The straight line through plot 1 that minimizes the squared vertical distances. Its slope is the Pearson correlation converted to the units of the data.</p><div class="eq">\[ \hat y=b_0+b_1x,\qquad b_1=r\,\frac{s_y}{s_x},\qquad b_0=\bar y-b_1\bar x \]</div><p>With standardized variables (\(s_x=s_y=1\)) the slope is exactly \(r\).</p></div>
+    <div data-id="t-pdf"><b class="tt">Probability density function</b><p>The height of the distribution at each point. It is not a probability: probabilities are areas under it, and it can exceed 1.</p><div class="eq">\[ P(a\le Y\le b)=\int_a^b f(y)\,dy,\qquad \int_{-\infty}^{\infty} f(y)\,dy=1 \]</div></div>
+    <div data-id="t-cdf"><b class="tt">Cumulative distribution function</b><p>The probability of being at or below \(y\): the percentile of \(y\). Passing \(Y\) through its own cdf always gives a uniform.</p><div class="eq">\[ F(y)=P(Y\le y)=\int_{-\infty}^{y} f(t)\,dt,\qquad U=F(Y)\sim\text{Uniform}(0,1) \]</div><p>Closed form means \(F\) can be written with elementary functions. The normal has none, so \(\Phi\) is computed numerically.</p></div>
+    <div data-id="t-inv"><b class="tt">Inverse cdf (quantile function)</b><p>The way back: from a percentile to a value. Feeding uniforms into it produces data with distribution \(F\), which is how simulators generate any distribution.</p><div class="eq">\[ y=F^{-1}(u),\qquad U\sim\text{Uniform}(0,1)\ \Rightarrow\ F^{-1}(U)\sim F \]</div></div>
+    <div data-id="t-val"><b class="tt">This value</b><p>The cdf evaluated at the value you are following with the slider. The result is its percentile: the share of the distribution at or below it.</p><div class="eq">\[ u=F(y)=P(Y\le y) \]</div></div>
+    <div data-id="t-jfx"><b class="tt">Layer 1: how X behaves alone</b><p>X is lognormal: \(\ln X\) is normal with mean \(\lambda\) and variance \(\tau^2\). So X is always positive and skewed to the right.</p><div class="eq">\[ f_X(x\mid\lambda,\tau^2)=\frac{1}{x\sqrt{2\pi\tau^2}}\exp\!\left[-\frac{(\ln x-\lambda)^2}{2\tau^2}\right] \]</div><p>The extra \(x\) in the denominator comes from the change of variables \(x=e^{z}\), the same idea as the transformations section.</p></div>
+    <div data-id="t-jfy"><b class="tt">Layer 2: how Y behaves once X is known</b><p>Given \(X=x\), Y is normal around a center that depends on x. Here the center is a line, \(\mu(x)=\alpha+\beta x\); on the board the simplest case \(\mu(x)=x\).</p><div class="eq">\[ f_{Y\mid X}(y\mid x)=\frac{1}{\sqrt{2\pi\sigma^2}}\exp\!\left[-\frac{(y-\mu(x))^2}{2\sigma^2}\right] \]</div><p>\(\beta\) sets the strength and direction of the relationship; \(\sigma\) sets how much Y scatters around the line.</p></div>
+    <div data-id="t-jxy"><b class="tt">Joint density and its level sets</b><p>Multiply the two layers. A level set is every point where the joint density equals the same number \(c\), like a contour line on a topographic map.</p><div class="eq">\[ f_{XY}(x,y)=f_{Y\mid X}(y\mid x)\,f_X(x),\qquad L_c=\{(x,y): f_{XY}(x,y)=c\} \]</div><p>The marginal of Y comes from integrating the joint over x: \(f_Y(y)=\int f_{XY}(x,y)\,dx\).</p></div>
+    <div data-id="t-strength"><b class="tt">Strength: Kendall's \(\tau\)</b><p>One common scale for every family, from −1 to 1. The page converts it to each family's own parameter, so switching families keeps the strength fixed and only changes where the dependence sits.</p><div class="eq">\[ P(\text{same direction})=\frac{1+\tau}{2} \]</div><p>\(\tau=0.5\): two random observations move the same way 75% of the time. See the table below the plots.</p></div>
+    <div data-id="t-ex-g"><b class="tt">Gaussian · fathers' and sons' heights</b><p>Galton's data: taller fathers tend to have taller sons, with the same amount of scatter at every height.</p><dl class="ex"><dt>What you see</dt><dd>An evenly tilted ellipse in plot 3. Short fathers do not predict short sons any more tightly than tall fathers predict tall sons.</dd><dt>Why this family</dt><dd>No tail dependence: extreme heights in one generation do not reliably come with extremes in the other.</dd></dl><p class="set">Try it: X: Normal (father) · Y: Normal (son) · τ ≈ 0.3</p><p class="set neg">With a negative τ the story flips: think of price and units sold, where higher prices go with fewer sales.</p></div>
+    <div data-id="t-ex-t"><b class="tt">Student t · daily returns of two banks</b><p>On ordinary days the two stocks move together loosely. On crash days and rally days they move together almost one-for-one.</p><dl class="ex"><dt>What you see</dt><dd>An ellipse with pinched points in both corners of plots 2 and 3, plus stray points far from the center.</dd><dt>Why this family</dt><dd>Both tails are dependent: joint crashes and joint booms are much more likely than a Gaussian model admits, which is why risk managers use it.</dd></dl><p class="set">Try it: X: Student t · Y: Student t · τ ≈ 0.5</p><p class="set neg">With a negative τ the story flips: think of price and units sold, where higher prices go with fewer sales.</p></div>
+    <div data-id="t-ex-c"><b class="tt">Clayton · temperature and ice-cream sales</b><p>An ice-cream shop. On cold days sales are low almost every time, and they barely change from one cold day to the next. On hot days sales are usually higher, but they swing a lot: a heat wave on a weekday, a beach day, a festival in town.</p><dl class="ex"><dt>What you see</dt><dd>Plot 2 is tight in the lower-left corner and fans out toward the upper right. In plot 3 the cloud is a teardrop with its point in the cold, low-sales corner.</dd><dt>Why this family</dt><dd>Lower-tail dependence: the lows happen together (cold day, weak sales) far more reliably than the highs.</dd></dl><p class="set">Try it: X: Normal (temperature) · Y: Lognormal (sales) · τ ≈ 0.6</p><p class="set neg">With a negative τ the story flips: think of price and units sold, where higher prices go with fewer sales.</p></div>
+    <div data-id="t-ex-gu"><b class="tt">Gumbel · flood losses in two neighboring cities</b><p>On normal days the insurance claims in the two cities are only loosely related. When a major storm arrives, both cities file huge claims at the same time.</p><dl class="ex"><dt>What you see</dt><dd>Plot 2 fans out near the lower-left and tightens in the upper-right corner. In plot 3 the teardrop points toward high losses in both cities.</dd><dt>Why this family</dt><dd>Upper-tail dependence: the disasters happen together. A Gaussian model would understate the chance of a joint catastrophe.</dd></dl><p class="set">Try it: X: Lognormal (city A) · Y: Lognormal (city B) · τ ≈ 0.5</p><p class="set neg">With a negative τ the story flips: think of price and units sold, where higher prices go with fewer sales.</p></div>
+    <div data-id="t-ex-f"><b class="tt">Frank · weekly ad spend and store visits</b><p>A store's advertising budget and its weekly foot traffic move together in normal weeks. The very best and very worst weeks, though, come from other causes: holidays, storms, a closed road.</p><dl class="ex"><dt>What you see</dt><dd>A symmetric band along the diagonal of plot 2 that stays fat in both corners. In plot 3 the cloud looks like a sausage, not a sharp ellipse.</dd><dt>Why this family</dt><dd>No tail dependence, and even weaker at the extremes than the Gaussian: the relationship lives in the middle of the data.</dd></dl><p class="set">Try it: X: Lognormal (ad spend) · Y: Normal (visits) · τ ≈ 0.4</p><p class="set neg">With a negative τ the story flips: think of price and units sold, where higher prices go with fewer sales.</p></div>
+  </div>
+  <div id="tipbox" role="tooltip" hidden></div>
 
   <footer>Simulated in the browser: 2,000 pairs per sample; level curves come from a smoothed 2-D histogram of the sample. Marginals are assigned by the rank order of U and V, the same idea as x = F⁻¹(u), which is why the copula does not change when you change the distributions.</footer>
 </div>
 
 <script>
 (function(){
-const showC=document.getElementById('showC'),showP=document.getElementById('showP');
+const showC=document.getElementById('showC'),showP=document.getElementById('showP'),showL=document.getElementById('showL');
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),sf=document.getElementById('fam'),sx=document.getElementById('dx'),sy=document.getElementById('dy'),ts=document.getElementById('tau');
 const N=2000;let seed=[];
 function rn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
@@ -140,10 +382,10 @@ function rb(a,b){const x=rg(a),y=rg(b);return x/(x+y);}
 function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x));}
 const Phi=z=>0.5*(1+erf(z/Math.SQRT2));
 function Pinv(p){let lo=-8,hi=8;for(let i=0;i<45;i++){const m=(lo+hi)/2;Phi(m)<p?lo=m:hi=m;}return (lo+hi)/2;}
-const D=[['n','Normal',()=>rn()],['e','Exponential (θ = 1)',()=>-Math.log(1-Math.random())],['l','Lognormal (σ = 0.6)',()=>Math.exp(0.6*rn())],['u','Uniform (0, 1)',()=>Math.random()],['g','Gamma (k = 2)',()=>rg(2)],['t','Student t (3 d.f.)',()=>rn()/Math.sqrt(rg(1.5)*2/3)],['c','Chi-square (4 d.f.)',()=>2*rg(2)],['be','Beta (2, 5)',()=>rb(2,5)],['a','U-shaped, Beta (0.5, 0.5)',()=>rb(0.5,0.5)],['w','Weibull (k = 1.5)',()=>Math.pow(-Math.log(1-Math.random()),1/1.5)],['m','Bimodal (normal mixture)',()=>(Math.random()<0.5?-2:2)+0.7*rn()]];
-D.forEach(([k,n])=>{sx.add(new Option(n,k));sy.add(new Option(n,k));});sx.value='n';sy.value='g';
+const D=[['n','Normal',()=>rn()],['u','Uniform (0, 1)',()=>Math.random()],['e','Exponential (θ = 1)',()=>-Math.log(1-Math.random())],['l','Lognormal (σ = 0.6)',()=>Math.exp(0.6*rn())],['m','Bimodal (normal mixture)',()=>(Math.random()<0.5?-2:2)+0.7*rn()],['t','Student t (3 d.f.)',()=>rn()/Math.sqrt(rg(1.5)*2/3)]];
+D.forEach(([k,n])=>{sx.add(new Option(n,k));sy.add(new Option(n,k));});sx.value='n';sy.value='l';
 const byK=Object.fromEntries(D.map(d=>[d[0],d]));
-function newSeed(){seed=[];for(let i=0;i<N;i++)seed.push([Math.random(),Math.random(),rn(),rn(),Math.random(),-Math.log(1-Math.random()),-Math.log(1-Math.random()),rg(1.5)]);}
+function newSeed(){margCache={};seed=[];for(let i=0;i<N;i++)seed.push([Math.random(),Math.random(),rn(),rn(),Math.random(),-Math.log(1-Math.random()),-Math.log(1-Math.random()),rg(1.5)]);}
 function debye(th){const n=200;let s=0;for(let i=1;i<=n;i++){const t=th*(i-0.5)/n;s+=t/(Math.exp(t)-1);}return s/n;}
 function frankTheta(tau){if(Math.abs(tau)<1e-6)return 0;const sg=Math.sign(tau),a=Math.abs(tau);let lo=1e-4,hi=80;for(let i=0;i<60;i++){const m=(lo+hi)/2;const tm=1-4/m*(1-debye(m));tm<a?lo=m:hi=m;}return sg*(lo+hi)/2;}
 function sample(fam,tau){const out=[];let par='';
@@ -158,7 +400,8 @@ function sample(fam,tau){const out=[];let par='';
   seed.forEach(s=>{const u=s[0],w=s[1];let v=w;if(Math.abs(th)>1e-6){v=-Math.log(1+w*(Math.exp(-th)-1)/(w+(1-w)*Math.exp(-th*u)))/th;}out.push([u,v]);});}
  return {pts:out,par};}
 function ranks(a){const idx=a.map((v,i)=>i).sort((i,j)=>a[i]-a[j]),r=new Array(a.length);idx.forEach((i,k)=>{r[i]=(k+1)/(a.length+1);});return r;}
-function rankMap(us,key){const g=byK[key][2],s=[];for(let i=0;i<us.length;i++)s.push(g());s.sort((a,b)=>a-b);const idx=us.map((u,i)=>i).sort((i,j)=>us[i]-us[j]),out=new Array(us.length);idx.forEach((i,r)=>{out[i]=s[r];});return out;}
+let margCache={};
+function rankMap(us,key){if(!margCache[key]){const g=byK[key][2],a=[];for(let i=0;i<us.length;i++)a.push(g());a.sort((x,y)=>x-y);margCache[key]=a;}const s=margCache[key];const idx=us.map((u,i)=>i).sort((i,j)=>us[i]-us[j]),out=new Array(us.length);idx.forEach((i,r)=>{out[i]=s[r];});return out;}
 function pear(a,b){const n=a.length,ma=a.reduce((s,v)=>s+v,0)/n,mb=b.reduce((s,v)=>s+v,0)/n;let sab=0,saa=0,sbb=0;for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb;sab+=da*db;saa+=da*da;sbb+=db*db;}return sab/Math.sqrt(saa*sbb);}
 function kend(a,b){let c=0,d=0;for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){const s=(a[i]-a[j])*(b[i]-b[j]);if(s>0)c++;else if(s<0)d++;}return (c-d)/(c+d);}
 function range(v){const s=[...v].sort((a,b)=>a-b);const lo=s[Math.floor(0.01*s.length)],hi=s[Math.floor(0.99*s.length)];const p=(hi-lo)*0.05;return {lo:lo-p,hi:hi+p};}
@@ -199,9 +442,40 @@ function joint(L,T,S,xs,ys,xr,yr,title,xl,yl,col,c){
  [xr.lo,(xr.lo+xr.hi)/2,xr.hi].forEach((v,i)=>{const t=fmt(v),w=ctx.measureText(t).width;ctx.fillText(t,X(v)-(i===2?w:i===1?w/2:0),Y0+S+14);});
  [yr.lo,(yr.lo+yr.hi)/2,yr.hi].forEach(v=>{const t=fmt(v);ctx.fillText(t,X0-ctx.measureText(t).width-4,Y(v)+4);});
  ctx.fillStyle=c.fg;ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillText(xl,X0+S-ctx.measureText(xl).width,Y0+S+30);
- ctx.save();ctx.translate(X0-36,Y0+S/2+40);ctx.rotate(-Math.PI/2);ctx.fillText(yl,0,0);ctx.restore();}
+ ctx.save();ctx.translate(X0-36,Y0+S/2+40);ctx.rotate(-Math.PI/2);ctx.fillText(yl,0,0);ctx.restore();
+ return {X,Y,X0,Y0,S};}
+
+const EXS={
+ g:[{kind:'Physical measures',t:"Fathers' and sons' heights",x:['n','Father height'],y:['n','Son height'],tau:0.3,s:"Taller fathers tend to have taller sons, with the same scatter at every height.",see:"An evenly tilted ellipse; no corner is special."},
+    {kind:'Scores',t:'Midterm and final exam grades',x:['n','Midterm'],y:['n','Final'],tau:0.5,s:"Students who do well on the midterm usually do well on the final; surprises are equally likely at the top and the bottom.",see:"Symmetric cloud along the diagonal."},
+    {kind:'Weather',t:'Daily high temperature in two nearby cities',x:['n','City A temperature'],y:['n','City B temperature'],tau:0.7,s:"The same weather system covers both cities, so their highs move closely together on every kind of day.",see:"A narrow ellipse; strong, but no tail clustering."}],
+ t:[{kind:'Money · returns',t:'Daily returns of two banks',x:['t','Bank A return'],y:['t','Bank B return'],tau:0.5,s:"Loosely linked on normal days, but crashes and rallies hit both at once.",see:"Pinched points in both corners and far-out stray points."},
+    {kind:'Money · currencies',t:'Two currencies against the dollar',x:['t','Currency A change'],y:['t','Currency B change'],tau:0.4,s:"A dollar shock moves both currencies sharply in the same direction.",see:"Both tails tighten while the middle stays loose."},
+    {kind:'Money · assets',t:'Crypto and tech stock returns',x:['t','Crypto return'],y:['t','Tech stock return'],tau:0.3,s:"Weakly related most days, but in market-wide panics or manias they move together.",see:"A weak overall tilt with joint extremes in both corners."}],
+ c:[{kind:'Sales',t:'Temperature and ice-cream sales',x:['n','Temperature'],y:['l','Daily sales'],tau:0.6,s:"Cold days bring reliably low sales; hot days bring higher sales that swing a lot.",see:"Tight in the lower-left corner, fanning out toward the upper right."},
+    {kind:'Utility · satisfaction',t:'Customer satisfaction and repeat spending',x:['u','Satisfaction percentile'],y:['l','Repeat spending'],tau:0.5,s:"Very unhappy customers almost always stop buying; happy customers spend more, but how much varies widely.",see:"The lows cluster: low satisfaction comes with low spending."},
+    {kind:'Time · reliability',t:'Lifetimes of two parts on the same power supply',x:['e','Life of part A'],y:['e','Life of part B'],tau:0.5,s:"A bad power surge kills both parts early, so early failures happen together; long lifetimes are less tied.",see:"Short times cluster in the lower-left corner."}],
+ gu:[{kind:'Insurance · losses',t:'Flood losses in two neighboring cities',x:['l','Losses city A'],y:['l','Losses city B'],tau:0.5,s:"Normal days are loosely related; a major storm produces huge claims in both cities.",see:"Tight in the upper-right corner: disasters happen together."},
+    {kind:'Time · delays',t:'Delivery delays of two shipments on one route',x:['e','Delay shipment A'],y:['e','Delay shipment B'],tau:0.4,s:"Small delays are random, but a port strike or a storm makes both shipments very late.",see:"Long delays cluster in the upper-right corner."},
+    {kind:'Energy · demand',t:'Heat and peak electricity demand',x:['n','Temperature'],y:['l','Peak demand'],tau:0.6,s:"On mild days demand depends on many things; on extreme heat days demand is reliably at its peak.",see:"The highs cluster: hottest days, highest demand."}],
+ f:[{kind:'Marketing',t:'Weekly ad spend and store visits',x:['l','Ad spend'],y:['n','Store visits'],tau:0.4,s:"Related in normal weeks; the best and worst weeks come from holidays, storms or closures.",see:"A symmetric band that stays fat in both corners."},
+    {kind:'Utility · wellbeing',t:'Hours of sleep and productivity score',x:['n','Hours of sleep'],y:['n','Productivity score'],tau:0.3,s:"More sleep helps on average, but the very best and worst days are driven by other things.",see:"A mild tilt with no clustering at the extremes."},
+    {kind:'Time · web',t:'Time on site and items in the cart',x:['e','Minutes on site'],y:['l','Items in cart'],tau:0.4,s:"Visitors who stay longer tend to add more items, steadily, without special behavior at the extremes.",see:"A smooth diagonal band; corners no tighter than the middle."}]};
+const famName={g:'Gaussian',t:'Student t',c:'Clayton',gu:'Gumbel',f:'Frank'};
+let lastFam=null;
+function renderExamples(fam){if(fam===lastFam)return;lastFam=fam;document.getElementById('exfam').textContent=famName[fam];
+ const box=document.getElementById('excards');box.replaceChildren();
+ EXS[fam].forEach((e,i)=>{const c=document.createElement('article');c.className='excard';
+  c.innerHTML='<div class="kind"></div><h3></h3><div class="vars"><span></span><span></span><span></span></div><p class="story"></p><p class="see"></p><button type="button">Load this example</button>';
+  c.querySelector('.kind').textContent=e.kind;c.querySelector('h3').textContent=e.t;
+  const v=c.querySelectorAll('.vars span');v[0].textContent='X: '+e.x[1]+' · '+byK[e.x[0]][1];v[1].textContent='Y: '+e.y[1]+' · '+byK[e.y[0]][1];v[2].textContent='τ = '+e.tau;
+  c.querySelector('.story').textContent=e.s;c.querySelector('.see').textContent='What you see: '+e.see;
+  c.querySelector('button').addEventListener('click',()=>{sx.value=e.x[0];sy.value=e.y[0];ts.value=e.tau;box.querySelectorAll('.excard').forEach(k=>k.classList.remove('active'));c.classList.add('active');draw();document.getElementById('cv').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});});
+  box.appendChild(c);});}
 function draw(){
- const tau=parseFloat(ts.value),fam=sf.value;document.getElementById('tout').textContent=tau.toFixed(2);
+ const tau=parseFloat(ts.value),fam=sf.value;
+ renderExamples(fam);
+ {const ex=document.getElementById('exchip');ex.dataset.tip='t-ex-'+fam;document.getElementById('exname').textContent={g:'Gaussian',t:'Student t',c:'Clayton',gu:'Gumbel',f:'Frank'}[fam];}document.getElementById('tout').textContent=tau.toFixed(2);
  const {pts,par}=sample(fam,tau);const U=ranks(pts.map(p=>p[0])),V=ranks(pts.map(p=>p[1]));
  const X=rankMap(U,sx.value),Y=rankMap(V,sy.value),Z1=U.map(Pinv),Z2=V.map(Pinv);
  document.getElementById('p1').textContent=pear(X,Y).toFixed(2);
@@ -214,16 +488,216 @@ function draw(){
  cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
  const step=S+120,pos=[0,1,2].map(i=>{const r=Math.floor(i/cols),k=i%cols;const rowCount=Math.min(cols,3-r*cols);const off=(W-rowCount*step)/2;return [Math.max(46,off+46+k*step),26+r*blockH];});
  const ur={lo:0,hi:1},zr={lo:-3.5,hi:3.5};
- joint(pos[0][0],pos[0][1],S,X,Y,range(X),range(Y),'1. Original scale','X: '+byK[sx.value][1],'Y: '+byK[sy.value][1],c.real,c);
+ const xr1=range(X),yr1=range(Y),g1=joint(pos[0][0],pos[0][1],S,X,Y,xr1,yr1,'1. Original scale','X: '+byK[sx.value][1],'Y: '+byK[sy.value][1],c.real,c);
+ {const n=X.length,mx=X.reduce((a,v)=>a+v,0)/n,my=Y.reduce((a,v)=>a+v,0)/n;let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(X[i]-mx)*(Y[i]-my);sxx+=(X[i]-mx)*(X[i]-mx);syy+=(Y[i]-my)*(Y[i]-my);}
+  const b1=sxy/sxx,b0=my-b1*mx,r=sxy/Math.sqrt(sxx*syy),sdx=Math.sqrt(sxx/(n-1)),sdy=Math.sqrt(syy/(n-1));
+  document.getElementById('regb').textContent='b₁ = r·s_y/s_x = '+r.toFixed(2)+' × '+sdy.toFixed(2)+'/'+sdx.toFixed(2);
+  if(showL.checked){ctx.save();ctx.beginPath();ctx.rect(g1.X0,g1.Y0,g1.S,g1.S);ctx.clip();ctx.strokeStyle=c.fg;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(g1.X(xr1.lo),g1.Y(b0+b1*xr1.lo));ctx.lineTo(g1.X(xr1.hi),g1.Y(b0+b1*xr1.hi));ctx.stroke();ctx.restore();}
+  document.getElementById('reg').textContent='ŷ = '+b0.toFixed(2)+(b1<0?' − ':' + ')+Math.abs(b1).toFixed(2)+'·x';}
  joint(pos[1][0],pos[1][1],S,U,V,ur,ur,'2. Uniforms = copula','U = F(X)','V = G(Y)',c.unif,c);
  joint(pos[2][0],pos[2][1],S,Z1,Z2,zr,zr,'3. Normal scale','z₁ = Φ⁻¹(U)','z₂ = Φ⁻¹(V)',c.norm,c);}
-[sf,sx,sy,showC,showP].forEach(e=>e.addEventListener('change',draw));ts.addEventListener('input',draw);
+[sf,sx,sy,showC,showP,showL].forEach(e=>e.addEventListener('change',draw));ts.addEventListener('input',draw);
 document.getElementById('b').addEventListener('click',()=>{newSeed();draw();});
 window.addEventListener('resize',draw);
 try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
 new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(draw);}
 newSeed();draw();
+})();
+</script>
+
+<script>
+(function(){
+const cv=document.getElementById('tcv'),ctx=cv.getContext('2d'),sd=document.getElementById('tdist'),sl=document.getElementById('ty'),btn=document.getElementById('tanim');
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x));}
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2)),phi=z=>Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+const D={
+ nor:{name:'Normal (0, 1)',lo:-3.5,hi:3.5,pdf:phi,cdf:Phi,inv:null,fp:'f(y) = e^(−y²/2) / √(2π)',fc:'F(y) = Φ(y) = ½[1 + erf(y/√2)]',fi:'y = Φ⁻¹(u): numerical (norm.ppf)',note:'Φ is the name of the standard normal cdf. It is this integral, which has no elementary closed form, so it is computed numerically (norm.cdf in Python).',ev:y=>'Φ('+y.toFixed(2)+')'},
+ uni:{name:'Uniform (0, 1)',lo:0,hi:1,pdf:y=>(y<0||y>1)?0:1,cdf:y=>y<=0?0:y>=1?1:y,inv:u=>u,fp:'f(y) = 1,  0 ≤ y ≤ 1',fc:'F(y) = y',fi:'y = u',note:'Already uniform: F is the identity line and nothing moves. This is where every other distribution ends up.',ev:y=>y.toFixed(2)},
+ exp:{name:'Exponential (θ = 1)',lo:0,hi:4,pdf:y=>y<0?0:Math.exp(-y),cdf:y=>y<0?0:1-Math.exp(-y),inv:u=>-Math.log(1-u),fp:'f(y) = e^(−y),  y ≥ 0',fc:'F(y) = 1 − e^(−y)',fi:'y = −ln(1 − u)',note:'Both the cdf and its inverse have closed forms, which makes it the clearest example of the transform.',ev:y=>'1 − e^(−'+y.toFixed(2)+')'},
+ lgn:{name:'Lognormal (σ = 0.6)',lo:0,hi:4,pdf:y=>y<=0?0:phi(Math.log(y)/0.6)/(0.6*y),cdf:y=>y<=0?0:Phi(Math.log(y)/0.6),inv:u=>Math.exp(0.6*Pinv(u)),fp:'f(y) = φ(ln y / 0.6) / (0.6·y),  y > 0',fc:'F(y) = Φ(ln y / 0.6)',fi:'y = e^(0.6·Φ⁻¹(u))',note:'Φ (capital phi) is the standard normal cdf, the integral shown. It has no elementary closed form, so the lognormal cdf does not either.',ev:y=>'Φ(ln '+y.toFixed(2)+' / 0.6)'},
+ bim:{name:'Bimodal (normal mixture)',lo:-4.5,hi:4.5,pdf:y=>0.5*phi((y+2)/0.7)/0.7+0.5*phi((y-2)/0.7)/0.7,cdf:y=>0.5*Phi((y+2)/0.7)+0.5*Phi((y-2)/0.7),inv:null,fp:'f(y) = ½φ((y+2)/0.7)/0.7 + ½φ((y−2)/0.7)/0.7',fc:'F(y) = ½Φ((y+2)/0.7) + ½Φ((y−2)/0.7)',fi:'numerical',note:'Half of the data sits around −2 and half around 2. Its cdf is the average of two Φ curves, so it has no elementary closed form either. Watch the flat stretch of the cdf between the two peaks.',ev:y=>'½Φ(('+y.toFixed(2)+'+2)/0.7) + ½Φ(('+y.toFixed(2)+'−2)/0.7)'},
+ t3:{name:'Student t (3 d.f.)',lo:-6,hi:6,pdf:y=>6*Math.sqrt(3)/(Math.PI*Math.pow(3+y*y,2)),cdf:y=>0.5+(y/(Math.sqrt(3)*(1+y*y/3))+Math.atan(y/Math.sqrt(3)))/Math.PI,inv:null,fp:'f(y) = 6√3 / (π(3 + y²)²)',fc:'F(y) = ½ + [ (y/√3)/(1 + y²/3) + arctan(y/√3) ] / π',fi:'numerical',note:'With 3 degrees of freedom the cdf happens to have a closed form. Its tails are heavy: values beyond ±4 are far more common than in the normal.',ev:y=>'F('+y.toFixed(2)+')'}};
+function Pinv(p){let lo=-9,hi=9;for(let i=0;i<55;i++){const m=(lo+hi)/2;Phi(m)<p?lo=m:hi=m;}return (lo+hi)/2;}
+function quant(d,u){if(d.inv)return d.inv(u);let lo=d.lo-50,hi=d.hi+50;if(d===D.bet){lo=0;hi=1;}if(d===D.gam){lo=0;hi=60;}if(d===D.nor){return Pinv(u);}for(let i=0;i<60;i++){const m=(lo+hi)/2;d.cdf(m)<u?lo=m:hi=m;}return (lo+hi)/2;}
+Object.entries(D).forEach(([k,d])=>sd.add(new Option(d.name,k)));sd.value='exp';
+const TEX={
+ nor:{p:'f(y)=\\dfrac{1}{\\sqrt{2\\pi}}\\,e^{-y^{2}/2}',c:'F(y)=\\Phi(y)=\\int_{-\\infty}^{y}\\frac{1}{\\sqrt{2\\pi}}\\,e^{-t^{2}/2}\\,dt',i:'y=\\Phi^{-1}(u)\\ \\text{(numerical)}',v:y=>'\\Phi('+y+')'},
+ uni:{p:'f(y)=1,\\quad 0\\le y\\le 1',c:'F(y)=y',i:'y=u',v:y=>y},
+ exp:{p:'f(y)=e^{-y},\\quad y\\ge 0',c:'F(y)=1-e^{-y}',i:'y=-\\ln(1-u)',v:y=>'1-e^{-'+y+'}'},
+ lgn:{p:'f(y)=\\dfrac{\\varphi(\\ln y/0.6)}{0.6\\,y},\\quad y>0',c:'F(y)=\\Phi\\!\\left(\\dfrac{\\ln y}{0.6}\\right)=\\int_{-\\infty}^{\\ln y/0.6}\\frac{1}{\\sqrt{2\\pi}}\\,e^{-t^{2}/2}\\,dt',i:'y=e^{0.6\\,\\Phi^{-1}(u)}',v:y=>'\\Phi\\!\\left(\\dfrac{\\ln '+y+'}{0.6}\\right)'},
+ bim:{p:'f(y)=\\tfrac{1}{2}\\cdot\\dfrac{\\varphi\\!\\left(\\frac{y+2}{0.7}\\right)}{0.7}+\\tfrac{1}{2}\\cdot\\dfrac{\\varphi\\!\\left(\\frac{y-2}{0.7}\\right)}{0.7}',c:'F(y)=\\tfrac{1}{2}\\,\\Phi\\!\\left(\\dfrac{y+2}{0.7}\\right)+\\tfrac{1}{2}\\,\\Phi\\!\\left(\\dfrac{y-2}{0.7}\\right)',i:'y=F^{-1}(u)\\ \\text{(numerical)}',v:y=>'\\tfrac{1}{2}\\Phi\\!\\left(\\tfrac{'+y+'+2}{0.7}\\right)+\\tfrac{1}{2}\\Phi\\!\\left(\\tfrac{'+y+'-2}{0.7}\\right)'},
+ t3:{p:'f(y)=\\dfrac{6\\sqrt{3}}{\\pi\\,(3+y^{2})^{2}}',c:'F(y)=\\dfrac{1}{2}+\\dfrac{1}{\\pi}\\left[\\dfrac{y/\\sqrt{3}}{1+y^{2}/3}+\\arctan\\!\\left(\\dfrac{y}{\\sqrt{3}}\\right)\\right]',i:'y=F^{-1}(u)\\ \\text{(numerical)}',v:y=>'\\tfrac{1}{2}+\\tfrac{1}{\\pi}\\left[\\tfrac{'+y+'/\\sqrt{3}}{1+('+y+')^{2}/3}+\\arctan\\tfrac{'+y+'}{\\sqrt{3}}\\right]'}};
+let mjReady=false;
+function tex(id,src,fallback){const el=document.getElementById(id);if(mjReady&&window.MathJax&&MathJax.tex2svg){try{el.replaceChildren(MathJax.tex2svg(src,{display:false}));return;}catch(e){}}el.textContent=fallback;}
+document.addEventListener('mj-ready',()=>{mjReady=true;draw();});
+let parts=[],topC=new Array(10).fill(0),sideC=new Array(14).fill(0),total=0,queue=[],raf=null;
+const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function resetAnim(){parts=[];topC.fill(0);sideC.fill(0);total=0;queue=[];if(raf){cancelAnimationFrame(raf);raf=null;}}
+function tok(cs,n){return cs.getPropertyValue(n).trim();}
+function rgba(h,a){if(h[0]==='#'&&h.length===7){return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';}return h;}
+function geom(){const W=Math.min(cv.clientWidth,680),H=Math.round(Math.max(460,Math.min(580,W*0.88)));const sideW=Math.min(140,W*0.22),topH=120;return {W,H,sideW,topH,L:50,R:W-sideW-28,T:topH+40,B:H-40};}
+function draw(){
+ const d=D[sd.value],g=geom(),dpr=window.devicePixelRatio||1;
+ cv.style.height=g.H+'px';cv.width=g.W*dpr;cv.height=g.H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,g.W,g.H);
+ const cs=getComputedStyle(document.documentElement),fg=tok(cs,'--fg'),mu=tok(cs,'--muted'),line=tok(cs,'--line'),acc=tok(cs,'--norm'),bc=['--b1','--b2','--b3','--b4','--b5'].map(n=>tok(cs,n));
+ const {L,R,T,B,sideW,topH}=g,cl=y=>Math.max(d.lo,Math.min(d.hi,y)),X=y=>L+(R-L)*(cl(y)-d.lo)/(d.hi-d.lo),U=u=>B-(B-T)*u;
+ const edges=[0,0.2,0.4,0.6,0.8,1].map(u=>u===0?d.lo:u===1?d.hi:cl(quant(d,u)));
+ let pmax=0;for(let i=0;i<=400;i++){const y=d.lo+(d.hi-d.lo)*i/400;pmax=Math.max(pmax,d.pdf(y));}pmax*=1.08;
+ const TY=v=>T-8-(topH-24)*Math.min(v,pmax)/pmax,SR=v=>R+8+(sideW-16)*v/1.4;
+ // center: bands + frame + cdf
+ for(let k=0;k<5;k++){ctx.fillStyle=rgba(bc[k],0.10);ctx.fillRect(X(edges[k]),U((k+1)/5),X(edges[k+1])-X(edges[k]),U(k/5)-U((k+1)/5));}
+ ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T+0.5,R-L,B-T);
+ ctx.strokeStyle=fg;ctx.lineWidth=2.5;ctx.beginPath();for(let i=0;i<=400;i++){const y=d.lo+(d.hi-d.lo)*i/400,u=d.cdf(y);i?ctx.lineTo(X(y),U(u)):ctx.moveTo(X(y),U(u));}ctx.stroke();
+ // top: pdf of Y, upright, sharing the horizontal y axis
+ for(let k=0;k<5;k++){const a=edges[k],b=edges[k+1];if(b<=a)continue;ctx.fillStyle=rgba(bc[k],0.38);ctx.beginPath();ctx.moveTo(X(a),T-8);for(let i=0;i<=50;i++){const y=a+(b-a)*i/50;ctx.lineTo(X(y),TY(d.pdf(y)));}ctx.lineTo(X(b),T-8);ctx.fill();}
+ if(total>0){const bw=(d.hi-d.lo)/sideC.length;ctx.strokeStyle=rgba(fg,0.55);ctx.lineWidth=1;sideC.forEach((c,i)=>{const dens=c/(total*bw);const x0=X(d.lo+i*bw),x1=X(d.lo+(i+1)*bw);ctx.strokeRect(x0,TY(dens),x1-x0,T-8-TY(dens));});}
+ ctx.strokeStyle=tok(cs,'--real');ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=300;i++){const y=d.lo+(d.hi-d.lo)*i/300;i?ctx.lineTo(X(y),TY(d.pdf(y))):ctx.moveTo(X(y),TY(d.pdf(y)));}ctx.stroke();
+ ctx.strokeStyle=mu;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,T-8);ctx.lineTo(R,T-8);ctx.stroke();
+ // right: uniform pdf, sharing the vertical u axis
+ for(let k=0;k<5;k++){ctx.fillStyle=rgba(bc[k],0.38);ctx.fillRect(R+8,U((k+1)/5),SR(1)-(R+8),U(k/5)-U((k+1)/5));}
+ if(total>0){const done=topC.reduce((a,b)=>a+b,0)||1;ctx.fillStyle=rgba(fg,0.22);topC.forEach((c,i)=>{const h=c/(done*0.1);ctx.fillRect(R+8,U((i+1)/10)+1,SR(h)-(R+8),U(i/10)-U((i+1)/10)-2);});}
+ ctx.strokeStyle=tok(cs,'--unif');ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(R+8,U(0));ctx.lineTo(SR(1),U(0));ctx.lineTo(SR(1),U(1));ctx.lineTo(R+8,U(1));ctx.stroke();
+ ctx.strokeStyle=mu;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(R+8,T);ctx.lineTo(R+8,B);ctx.stroke();
+ ctx.font='11px "JetBrains Mono", ui-monospace, monospace';for(let k=0;k<5;k++){ctx.fillStyle=bc[k];ctx.fillText('20%',R+14,U(k/5+0.1)+4);}
+ // titles and ticks
+ ctx.fillStyle=fg;ctx.font='600 13px Manrope, system-ui, sans-serif';ctx.fillText('pdf of Y',L,22);
+ ctx.fillText('Uniform pdf',R+8,T-30);ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillText('f(u) = 1',R+8,T-14);
+ ctx.fillText('cdf: u = F(y)',L+8,T+18);
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';
+ [0,0.2,0.4,0.6,0.8,1].forEach(v=>{const t=String(v),w=ctx.measureText(t).width;ctx.fillText(t,L-w-6,U(v)+4);});
+ const fmtT=v=>Math.abs(v)>=10?v.toFixed(0):Math.abs(v)>=1?v.toFixed(1):v.toFixed(2);
+ [d.lo,(d.lo+d.hi)/2,d.hi].forEach((v,i)=>{const t=fmtT(v),w=ctx.measureText(t).width;ctx.fillText(t,X(v)-(i===0?0:i===2?w:w/2),B+15);});
+ ctx.fillStyle=fg;ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillText('y',R-8,B+30);ctx.fillText('u',L-40,T+4);
+ // animated samples: down from the pdf of Y to the curve, then right to the uniform
+ ctx.fillStyle=acc;parts.forEach(p=>{let x,y;const yc=cl(p.y);if(p.t<0.5){const f=p.t/0.5;x=X(yc);y=(T-8)+(U(p.u)-(T-8))*f;}else{const f=(p.t-0.5)/0.5;x=X(yc)+((R+8)-X(yc))*f;y=U(p.u);}ctx.globalAlpha=(p.y<d.lo||p.y>d.hi)?0.35:0.85;ctx.beginPath();ctx.arc(x,y,2.6,0,7);ctx.fill();});ctx.globalAlpha=1;
+ // followed value
+ const y0=d.lo+(d.hi-d.lo)*parseInt(sl.value)/1000,u0=d.cdf(y0);
+ ctx.strokeStyle=acc;ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(X(y0),TY(d.pdf(y0)));ctx.lineTo(X(y0),U(u0));ctx.lineTo(SR(1),U(u0));ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle=acc;[[X(y0),T-8],[X(y0),U(u0)],[R+8,U(u0)]].forEach(([a,b])=>{ctx.beginPath();ctx.arc(a,b,5,0,7);ctx.fill();});
+ ctx.font='600 12px "JetBrains Mono", ui-monospace, monospace';ctx.fillText('u = '+u0.toFixed(2),Math.min(SR(1)-62,R+14),Math.max(T+12,U(u0)-8));
+ document.getElementById('tyout').textContent=y0.toFixed(2);
+ const tx=TEX[sd.value],ys=y0.toFixed(2);
+ tex('fpdf',tx.p,d.fp);tex('fcdf',tx.c,d.fc);tex('finv',tx.i,d.fi);
+ document.getElementById('fnote').textContent=d.note;document.getElementById('fnote').hidden=!d.note;
+ tex('fval','F('+ys+')='+tx.v(ys)+'='+u0.toFixed(3),'F('+ys+') = '+d.ev(y0)+' = '+u0.toFixed(3));}
+function addSample(){const d=D[sd.value],u=Math.min(0.9995,Math.max(0.0005,Math.random())),y=quant(d,u);total++;const bw=(d.hi-d.lo)/sideC.length,i=Math.floor((y-d.lo)/bw);if(i>=0&&i<sideC.length)sideC[i]++;return {y,u,t:0};}
+function step(){for(let k=0;k<6&&queue.length;k++){queue.pop();parts.push(addSample());}
+ parts.forEach(p=>{p.t+=0.035;});const done=parts.filter(p=>p.t>=1);done.forEach(p=>{topC[Math.min(9,Math.floor(p.u*10))]++;});parts=parts.filter(p=>p.t<1);
+ draw();if(queue.length||parts.length){raf=requestAnimationFrame(step);}else{raf=null;btn.textContent='Animate again';}}
+btn.addEventListener('click',()=>{resetAnim();if(reduce){for(let i=0;i<400;i++){const p=addSample();topC[Math.min(9,Math.floor(p.u*10))]++;}draw();btn.textContent='Animate again';return;}queue=new Array(400).fill(1);btn.textContent='Running…';raf=requestAnimationFrame(step);});
+sd.addEventListener('change',()=>{resetAnim();btn.textContent='Animate';draw();});
+sl.addEventListener('input',draw);window.addEventListener('resize',draw);
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(draw);}
+draw();
+})();
+</script>
+<script>
+(function(){
+const box=document.getElementById('tipbox');let cur=null;
+function place(el){const r=el.getBoundingClientRect(),bw=box.offsetWidth,bh=box.offsetHeight;
+ let x=Math.min(Math.max(16,r.left),window.innerWidth-bw-16),y=r.bottom+8;
+ if(y+bh>window.innerHeight-8)y=Math.max(8,r.top-bh-8);box.style.left=x+'px';box.style.top=y+'px';}
+function show(el){const t=document.querySelector('#tiptpl [data-id="'+el.dataset.tip+'"]');if(!t)return;box.innerHTML=t.innerHTML;{const tv=document.getElementById('tau');box.querySelectorAll('.neg').forEach(n=>{n.hidden=!(tv&&parseFloat(tv.value)<0);});}box.hidden=false;cur=el;place(el);}
+function hide(){box.hidden=true;cur=null;}
+document.querySelectorAll('.tip').forEach(el=>{
+ el.addEventListener('mouseenter',()=>show(el));el.addEventListener('mouseleave',hide);
+ el.addEventListener('focus',()=>show(el));el.addEventListener('blur',hide);
+ el.addEventListener('click',e=>{e.stopPropagation();cur===el?hide():show(el);});});
+document.addEventListener('click',hide);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hide();});
+window.addEventListener('scroll',()=>{if(cur)place(cur);},{passive:true});
+})();
+</script>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id),cv=$('jcv'),ctx=cv.getContext('2d');
+const ids=['jl','jt','ja','jb','js','jx0'];
+let mj=false;document.addEventListener('mj-ready',()=>{mj=true;draw();});
+function tex(id,src,fb){const el=$(id);if(mj&&window.MathJax&&MathJax.tex2svg){try{el.replaceChildren(MathJax.tex2svg(src,{display:false}));return;}catch(e){}}el.textContent=fb;}
+function rn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const SQ=Math.sqrt(2*Math.PI);
+function P(){return {xd:$('jxd').value,lam:+$('jl').value,tau:+$('jt').value,a:+$('ja').value,b:+$('jb').value,sg:+$('js').value};}
+function fx(x,p){if(p.xd==='l'){if(x<=0)return 0;const z=(Math.log(x)-p.lam)/p.tau;return Math.exp(-z*z/2)/(x*p.tau*SQ);}const m=Math.exp(p.lam+p.tau*p.tau/2),sd=Math.sqrt((Math.exp(p.tau*p.tau)-1)*Math.exp(2*p.lam+p.tau*p.tau));const z=(x-m)/sd;return Math.exp(-z*z/2)/(sd*SQ);}
+function fyx(y,x,p){const z=(y-(p.a+p.b*x))/p.sg;return Math.exp(-z*z/2)/(p.sg*SQ);}
+function stats(p){const m=Math.exp(p.lam+p.tau*p.tau/2),sd=Math.sqrt((Math.exp(p.tau*p.tau)-1)*Math.exp(2*p.lam+p.tau*p.tau));return {m,sd};}
+function xrange(p){const {m,sd}=stats(p);if(p.xd==='l'){return {lo:0,hi:Math.exp(p.lam+2.6*p.tau)};}return {lo:m-3.2*sd,hi:m+3.2*sd};}
+let pts=[],ptsKey='';
+function sample(p){const key=JSON.stringify(p);if(key===ptsKey)return;ptsKey=key;pts=[];const {m,sd}=stats(p);for(let i=0;i<700;i++){const x=p.xd==='l'?Math.exp(p.lam+p.tau*rn()):m+sd*rn();pts.push([x,p.a+p.b*x+p.sg*rn()]);}}
+function segs(g,G,H,lev){const out=[],v=(i,j)=>g[j*G+i];for(let j=0;j<H-1;j++)for(let i=0;i<G-1;i++){const c=[[i,j,v(i,j)],[i+1,j,v(i+1,j)],[i+1,j+1,v(i+1,j+1)],[i,j+1,v(i,j+1)]],q=[];for(let e=0;e<4;e++){const A=c[e],B=c[(e+1)%4];if((A[2]-lev)*(B[2]-lev)<0){const f=(lev-A[2])/(B[2]-A[2]);q.push([A[0]+f*(B[0]-A[0]),A[1]+f*(B[1]-A[1])]);}}if(q.length===2)out.push(q);else if(q.length===4){out.push([q[0],q[1]]);out.push([q[2],q[3]]);}}return out;}
+function rgba(h,a){h=h.trim();if(h[0]==='#'&&h.length===7)return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';return h;}
+function f2(v){return (Math.round(v*100)/100).toFixed(2);}
+function draw(){
+ const p=P();$('jlo').textContent=p.lam.toFixed(2);$('jto').textContent=p.tau.toFixed(2);$('jao').textContent=p.a.toFixed(1);$('jbo').textContent=p.b.toFixed(1);$('jso').textContent=p.sg.toFixed(2);
+ const xr=xrange(p),ylo0=p.a+Math.min(p.b*xr.lo,p.b*xr.hi)-3.2*p.sg,yhi0=p.a+Math.max(p.b*xr.lo,p.b*xr.hi)+3.2*p.sg,yr={lo:ylo0,hi:yhi0};
+ const x0=xr.lo+(xr.hi-xr.lo)*(0.02+0.96*(+$('jx0').value)/1000);$('jx0o').textContent=x0.toFixed(2);
+ const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg').trim(),mu=cs.getPropertyValue('--muted').trim(),line=cs.getPropertyValue('--line').trim(),cx=cs.getPropertyValue('--real').trim(),cyc=cs.getPropertyValue('--unif').trim(),cj=cs.getPropertyValue('--norm').trim(),acc=cs.getPropertyValue('--accent').trim();
+ const W=Math.min(cv.clientWidth,680),H=Math.round(Math.max(440,Math.min(560,W*0.85))),dpr=window.devicePixelRatio||1;cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+ const topH=90,sideW=Math.min(100,W*0.18),L=50,R=W-sideW-20,T=topH+30,B=H-40;
+ const X=x=>L+(R-L)*(x-xr.lo)/(xr.hi-xr.lo),Y=y=>B-(B-T)*(y-yr.lo)/(yr.hi-yr.lo);
+ const G=110,Hh=110,g=new Float64Array(G*Hh);let gmax=0;const xs=[],ys=[];
+ for(let i=0;i<G;i++)xs.push(xr.lo+(xr.hi-xr.lo)*(i+0.5)/G);for(let j=0;j<Hh;j++)ys.push(yr.lo+(yr.hi-yr.lo)*(j+0.5)/Hh);
+ for(let j=0;j<Hh;j++)for(let i=0;i<G;i++){const v=fyx(ys[j],xs[i],p)*fx(xs[i],p);g[j*G+i]=v;if(v>gmax)gmax=v;}
+ const fyM=ys.map((y,j)=>{let sm=0;for(let i=0;i<G;i++)sm+=g[j*G+i];return sm*(xr.hi-xr.lo)/G;});
+ ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T+0.5,R-L,B-T);
+ ctx.save();ctx.beginPath();ctx.rect(L,T,R-L,B-T);ctx.clip();
+ if($('jc').checked){const lv=[0.04,0.12,0.25,0.42,0.62,0.82];const cw=(R-L)/G,ch=(B-T)/Hh;
+  for(let j=0;j<Hh;j++)for(let i=0;i<G;i++){const r=g[j*G+i]/gmax;let k=-1;lv.forEach((t,ii)=>{if(r>=t)k=ii;});if(k<0)continue;ctx.fillStyle=rgba(cj,0.06+0.07*k);ctx.fillRect(L+i*cw,B-(j+1)*ch,cw+0.6,ch+0.6);}
+  lv.forEach((t,k)=>{ctx.strokeStyle=rgba(cj,0.5+0.08*k);ctx.lineWidth=1.2+0.2*k;ctx.beginPath();segs(g,G,Hh,t*gmax).forEach(([a,b])=>{ctx.moveTo(L+(a[0]+0.5)*cw,B-(a[1]+0.5)*ch);ctx.lineTo(L+(b[0]+0.5)*cw,B-(b[1]+0.5)*ch);});ctx.stroke();});}
+ if($('jp').checked){sample(p);ctx.fillStyle=rgba(cx,0.5);pts.forEach(([x,y])=>{ctx.beginPath();ctx.arc(X(x),Y(y),1.8,0,7);ctx.fill();});}
+ if($('jm').checked){ctx.strokeStyle=fg;ctx.lineWidth=1.8;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(X(xr.lo),Y(p.a+p.b*xr.lo));ctx.lineTo(X(xr.hi),Y(p.a+p.b*xr.hi));ctx.stroke();ctx.setLineDash([]);}
+ if($('jsl').checked){const amp=(R-L)*0.16,pk=1/(p.sg*SQ);ctx.strokeStyle=acc;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(X(x0),T);ctx.lineTo(X(x0),B);ctx.stroke();
+  ctx.fillStyle=rgba(acc,0.18);ctx.strokeStyle=acc;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(x0),Y(yr.lo));for(let k=0;k<=160;k++){const y=yr.lo+(yr.hi-yr.lo)*k/160;ctx.lineTo(X(x0)+amp*fyx(y,x0,p)/pk,Y(y));}ctx.lineTo(X(x0),Y(yr.hi));ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle=acc;ctx.beginPath();ctx.arc(X(x0),Y(p.a+p.b*x0),4,0,7);ctx.fill();}
+ ctx.restore();
+ // top marginal of X
+ let fxmax=0;for(let i=0;i<=300;i++){fxmax=Math.max(fxmax,fx(xr.lo+(xr.hi-xr.lo)*i/300,p));}
+ const TY=v=>T-8-(topH-12)*v/(fxmax*1.08);ctx.fillStyle=rgba(cx,0.25);ctx.strokeStyle=cx;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(L,T-8);for(let i=0;i<=300;i++){const x=xr.lo+(xr.hi-xr.lo)*i/300;ctx.lineTo(X(x),TY(fx(x,p)));}ctx.lineTo(R,T-8);ctx.closePath();ctx.fill();ctx.stroke();
+ // right marginal of Y
+ const fymax=Math.max(...fyM),SR=v=>R+8+(sideW-12)*v/(fymax*1.08);ctx.fillStyle=rgba(cyc,0.25);ctx.strokeStyle=cyc;ctx.beginPath();ctx.moveTo(R+8,Y(yr.lo));ys.forEach((y,j)=>ctx.lineTo(SR(fyM[j]),Y(y)));ctx.lineTo(R+8,Y(yr.hi));ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.strokeStyle=mu;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,T-8);ctx.lineTo(R,T-8);ctx.moveTo(R+8,T);ctx.lineTo(R+8,B);ctx.stroke();
+ ctx.fillStyle=fg;ctx.font='600 13px Manrope, system-ui, sans-serif';ctx.fillText('f_X(x)',L,16);ctx.fillText('f_Y(y)',R+8,T-12);ctx.fillText('f_XY(x, y)',L+8,T+18);
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';
+ [xr.lo,(xr.lo+xr.hi)/2,xr.hi].forEach((v,i)=>{const t=f2(v),w=ctx.measureText(t).width;ctx.fillText(t,X(v)-(i===0?0:i===2?w:w/2),B+15);});
+ [yr.lo,(yr.lo+yr.hi)/2,yr.hi].forEach(v=>{const t=f2(v),w=ctx.measureText(t).width;ctx.fillText(t,L-w-6,Math.min(B,Math.max(T+10,Y(v)+4)));});
+ ctx.fillStyle=fg;ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillText('x',R-8,B+30);ctx.fillText('y',L-40,T+4);
+ // formulas
+ const {m,sd}=stats(p),mux='\\mu(x)='+(p.a===0?'':f2(p.a)+(p.b<0?'-':'+'))+(p.a===0&&p.b<0?'-':'')+f2(Math.abs(p.b))+'\\,x';
+ if(p.xd==='l')tex('jfx','f_X(x)=\\frac{1}{x\\sqrt{2\\pi('+f2(p.tau)+')^2}}\\exp\\!\\left[-\\frac{(\\ln x-('+f2(p.lam)+'))^2}{2('+f2(p.tau)+')^2}\\right],\\quad x>0','f_X(x) = lognormal(λ='+f2(p.lam)+', τ='+f2(p.tau)+')');
+ else tex('jfx','f_X(x)=\\frac{1}{\\sqrt{2\\pi('+f2(sd)+')^2}}\\exp\\!\\left[-\\frac{(x-'+f2(m)+')^2}{2('+f2(sd)+')^2}\\right]\\quad\\text{(same mean and variance as the lognormal)}','f_X(x) = normal(mean '+f2(m)+', sd '+f2(sd)+')');
+ tex('jfy','f_{Y\\mid X}(y\\mid x)=\\frac{1}{\\sqrt{2\\pi('+f2(p.sg)+')^2}}\\exp\\!\\left[-\\frac{(y-\\mu(x))^2}{2('+f2(p.sg)+')^2}\\right],\\qquad '+mux,'f(y|x) = normal(μ(x), σ='+f2(p.sg)+')');
+ tex('jxy','f_{XY}(x,y)=f_{Y\\mid X}(y\\mid x)\\,f_X(x),\\qquad L_c=\\{(x,y):f_{XY}(x,y)=c\\}','f_XY = f(y|x)·f_X(x)');
+ const fxCode=p.xd==='l'?"fX = np.exp(-(np.log(X) - lam)**2 / (2*tau**2)) / (X * np.sqrt(2*np.pi*tau**2))":"m = np.exp(lam + tau**2/2)\nsd = np.sqrt((np.exp(tau**2) - 1) * np.exp(2*lam + tau**2))\nfX = np.exp(-(X - m)**2 / (2*sd**2)) / np.sqrt(2*np.pi*sd**2)";
+ $('jcode').textContent=`import numpy as np
+import matplotlib.pyplot as plt
+
+lam, tau = ${f2(p.lam)}, ${f2(p.tau)}            # ln X ~ Normal(lam, tau^2)
+alpha, beta, sigma = ${f2(p.a)}, ${f2(p.b)}, ${f2(p.sg)}   # Y | X ~ Normal(alpha + beta*x, sigma^2)
+
+x = np.linspace(${Math.max(0.01,xr.lo).toFixed(2)}, ${xr.hi.toFixed(2)}, 400)
+y = np.linspace(${yr.lo.toFixed(2)}, ${yr.hi.toFixed(2)}, 400)
+X, Y = np.meshgrid(x, y)
+
+${fxCode}
+mu = alpha + beta * X
+fYgX = np.exp(-(Y - mu)**2 / (2*sigma**2)) / np.sqrt(2*np.pi*sigma**2)
+fXY = fYgX * fX                      # joint = conditional x marginal
+
+fig, ax = plt.subplots()
+ax.contour(X, Y, fXY, levels=8)      # level sets
+ax.plot(x, alpha + beta*x, '--', label='mu(x)')
+ax.set_xlabel('x'); ax.set_ylabel('y'); ax.legend()
+ax.set_title('Level sets of f_XY')
+plt.show()`;}
+ids.forEach(i=>$(i).addEventListener('input',draw));['jxd','jc','jp','jm','jsl'].forEach(i=>$(i).addEventListener('change',draw));
+$('jreset').addEventListener('click',()=>{$('jxd').value='l';$('jl').value=0;$('jt').value=0.5;$('ja').value=0;$('jb').value=1;$('js').value=0.5;draw();});
+$('jcopy').addEventListener('click',()=>{const t=$('jcode').textContent,b=$('jcopy');navigator.clipboard.writeText(t).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy code',1500);}).catch(()=>{const r=document.createRange();r.selectNodeContents($('jcode'));const sl=window.getSelection();sl.removeAllRanges();sl.addRange(r);b.textContent='Selected: press Ctrl+C';});});
+window.addEventListener('resize',draw);try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+draw();
 })();
 </script>
 </body>
