@@ -30,6 +30,28 @@ It was built for **Stochastic Methods for Business Analytics** (MSBA, University
 
 ---
 
+## Two reviews before the steps
+
+### Review A · Density, probability and notation
+
+A pdf gives **heights**, probabilities are **areas**, and the cdf **accumulates** those areas:
+
+$$P(a \le Y \le b) = \int_a^b f(y)\,dy = F(b) - F(a)$$
+
+**On the page:** drag the ends of an interval and watch the shaded area under the pdf match the gap on the cdf. A Uniform(0, 0.25) shows that a density can be larger than 1. A notation table explains each symbol used later ($Y$ vs. $y$, $f$ vs. $F$, $\sim$, $\Phi$, the conditional bar $\mid$, iid).
+
+### Review B · Joint, marginal, conditional and independence
+
+The ideas behind every multivariate model, first with a table you can count: an ice-cream shop's 100 days by weather and sales.
+
+- **Marginal:** add up a row or a column.
+- **Conditional:** divide a row by its total.
+- **Independence:** every cell equals the product of its row and column totals.
+
+**On the page:** a slider changes how much the weather affects sales. The totals at the edges never move, only the inside of the table: keeping the marginals fixed while changing the dependence is exactly what a copula does. A side-by-side table links each discrete formula to its continuous version.
+
+---
+
 ## The four steps
 
 ### 1 · Transformations: any distribution into a uniform

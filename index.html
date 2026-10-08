@@ -150,6 +150,23 @@ pre.code{background:var(--surface);border:1px solid var(--line);border-radius:8p
 .dq-actions button{width:auto}
 .dq-a>summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:14px}
 .dq-a>p{margin:8px 0 0;background:var(--bg);border-radius:6px;padding:10px 12px;font-size:14px}
+.review .eyebrow{color:var(--unif)}
+.jgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start}
+table.jt{font-size:14px;font-variant-numeric:tabular-nums}
+table.jt th,table.jt td{text-align:center;padding:8px 10px}
+table.jt td.cell{font-family:var(--mono)}
+table.jt td.cell small{display:block;color:var(--muted);font-size:11px}
+table.jt .mg{font-family:var(--mono);font-weight:600;background:var(--bg)}
+table.jt tr.sel td,table.jt tr.sel th{background:rgba(127,127,127,.12)}
+.condbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.condbox h3{font-family:var(--display);font-size:17px;margin:0 0 10px}
+.cbar{display:grid;grid-template-columns:62px 1fr 48px;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.cbar .track{position:relative;height:22px;background:var(--bg);border-radius:4px;overflow:hidden}
+.cbar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--unif);opacity:.75}
+.cbar .mark{position:absolute;top:0;bottom:0;width:2px;background:var(--fg)}
+.cbar b{font-family:var(--mono);font-weight:500;text-align:right}
+.rowbtn{width:auto;padding:5px 12px}
+.rowbtn[aria-pressed="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
 footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
@@ -159,9 +176,69 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
   <header>
     <div class="eyebrow">Stochastic methods · from transformations to copulas</div>
     <h1>Copula Lab</h1>
-    <p class="lede">A guided path in four steps. Each one uses the tool built in the step before: turning any variable into a uniform, combining two variables into a joint density, separating the marginals from the dependence with a copula, and measuring how strong that dependence is.</p>
-    <nav class="tabs" aria-label="Sections"><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a><a href="#discussion">Discussion</a></nav>
+    <p class="lede">Two short reviews, then a guided path in four steps. Each one uses the tool built in the step before: turning any variable into a uniform, combining two variables into a joint density, separating the marginals from the dependence with a copula, and measuring how strong that dependence is.</p>
+    <nav class="tabs" aria-label="Sections"><a href="#review-density">Review A · Density</a><a href="#review-joint">Review B · Joint &amp; conditional</a><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a><a href="#discussion">Discussion</a></nav>
   </header>
+
+  <section class="sect review" id="review-density">
+    <div class="eyebrow">Review A · before we start</div>
+    <h2 class="big">Density, probability and notation</h2>
+    <p class="lede">A quick refresher on the three ideas every later step relies on: a pdf gives heights, probabilities are areas, and the cdf accumulates those areas. Pick a distribution and drag the two ends of the interval.</p>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>A pdf has height 3 at some point. Is that an error?</summary><p>No. The height of a pdf is a density, not a probability, so it can be larger than 1. Only the total area has to equal 1.</p></details><details class="qa"><summary>For a continuous variable, what is the probability of getting exactly 5?</summary><p>Zero. A single point has no width, so it has no area. Probabilities come from intervals.</p></details><details class="qa"><summary>What is the difference between \(f(y)\) and \(F(y)\)?</summary><p>\(f(y)\) is the height of the density at \(y\). \(F(y)=P(Y\le y)\) is the accumulated probability up to \(y\).</p></details></details>
+    <div class="controls">
+      <div class="ctl"><label for="rd">Distribution</label><select id="rd"><option value="n">Normal (0, 1)</option><option value="e">Exponential (θ = 1)</option><option value="u">Uniform (0, 0.25): height 4</option></select></div>
+      <div class="ctl"><label for="ra">Left end a</label><div class="range"><input type="range" id="ra" min="0" max="1000" step="1" value="350"><output id="rao">–</output></div></div>
+      <div class="ctl"><label for="rb">Right end b</label><div class="range"><input type="range" id="rb" min="0" max="1000" step="1" value="650"><output id="rbo">–</output></div></div>
+    </div>
+    <div class="metrics">
+      <div class="metric real"><span>Height at a: f(a)</span><strong id="rfa">–</strong></div>
+      <div class="metric"><span>F(a) = P(Y ≤ a)</span><strong id="rFa">–</strong></div>
+      <div class="metric"><span>F(b) = P(Y ≤ b)</span><strong id="rFb">–</strong></div>
+      <div class="metric unif"><span>P(a ≤ Y ≤ b) = F(b) − F(a)</span><strong id="rP">–</strong></div>
+    </div>
+    <div class="plot"><canvas id="rcv" class="tcanvas" aria-label="pdf with the shaded area between a and b, and the cdf below showing F(a) and F(b)"></canvas></div>
+    <h2>Notation used on this page</h2>
+    <div class="tbl reftbl"><table>
+      <thead><tr><th>Symbol</th><th>Read it as</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td>\(Y\) vs. \(y\)</td><td>“capital Y” vs. “little y”</td><td>\(Y\) is the random variable (the number not yet observed); \(y\) is one specific value it can take.</td></tr>
+        <tr><td>\(Y\sim F\)</td><td>“Y is distributed as F”</td><td>Y follows the distribution F, e.g. \(U\sim\text{Uniform}(0,1)\).</td></tr>
+        <tr><td>\(f(y)\) or \(f_Y(y)\)</td><td>“the density of Y at y”</td><td>A height, not a probability. The subscript says whose density it is.</td></tr>
+        <tr><td>\(F(y)=P(Y\le y)\)</td><td>“the cdf of Y at y”</td><td>Accumulated probability up to y: the percentile of y. Always between 0 and 1.</td></tr>
+        <tr><td>\(\int_a^b f(y)\,dy\)</td><td>“the area under f from a to b”</td><td>The probability that Y lands between a and b.</td></tr>
+        <tr><td>\(\varphi,\ \Phi\)</td><td>“phi”, “capital phi”</td><td>The pdf and the cdf of the standard normal.</td></tr>
+        <tr><td>\(E[Y],\ V(Y)\)</td><td>“expected value”, “variance”</td><td>The long-run average and the spread around it.</td></tr>
+        <tr><td>\(f_{XY}(x,y)\)</td><td>“the joint density”</td><td>How X and Y behave together.</td></tr>
+        <tr><td>\(f_{Y\mid X}(y\mid x)\)</td><td>“the density of Y given X = x”</td><td>The vertical bar means “given”: how Y behaves once X is known.</td></tr>
+        <tr><td>iid</td><td>“independent and identically distributed”</td><td>Draws that do not affect each other and all follow the same distribution.</td></tr>
+      </tbody></table></div>
+    <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>How do you get \(P(a\le Y\le b)\) from the cdf?</summary><p>\(F(b)-F(a)\): the accumulated probability up to b minus the accumulated probability up to a. It equals the area under the pdf between a and b.</p></details><details class="qa"><summary>A Uniform(0, 0.25) has height 4. Why must it be exactly 4?</summary><p>Its width is 0.25 and the total area must be 1, so the height is \(1/0.25=4\).</p></details><details class="qa"><summary>What do the uppercase \(Y\) and the lowercase \(y\) mean in \(P(Y\le y)\)?</summary><p>\(Y\) is the random variable, the number that has not come out yet. \(y\) is a specific value it could take.</p></details></details>
+  </section>
+
+  <section class="sect review" id="review-joint">
+    <div class="eyebrow">Review B · before we start</div>
+    <h2 class="big">Joint, marginal, conditional and independence</h2>
+    <p class="lede">The same ideas behind every multivariate model, first with a table you can count. An ice-cream shop records 100 days by weather and sales. Move the slider to change how much the weather affects sales, and pick a weather row to see its conditional distribution.</p>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>If you know it is a hot day, does that change your guess about the shop's sales?</summary><p>Yes, if the two are related. That updated guess is a conditional probability: sales given the weather.</p></details><details class="qa"><summary>How would you get the share of hot days from a table of weather by sales?</summary><p>Add up the whole hot row. Summing over the other variable gives the marginal.</p></details><details class="qa"><summary>If weather and sales were unrelated, what would the chance of a hot day with high sales be?</summary><p>The chance of a hot day times the chance of high sales. Multiplying the marginals is what independence means.</p></details></details>
+    <div class="controls">
+      <div class="ctl"><label for="rs">How much does weather affect sales?</label><div class="range"><input type="range" id="rs" min="0" max="1" step="0.05" value="1"><output id="rso">–</output></div></div>
+      <div class="ctl"><span class="lbl">Condition on the weather</span><div class="checks" id="rrows" role="group" aria-label="Choose a weather row"></div></div>
+    </div>
+    <div class="jgrid">
+      <div class="tbl"><table class="jt" id="rtable" aria-label="Joint probability table of weather by sales"></table><p class="tiphint">Inside: joint probabilities. Last column and last row: marginals. Small gray number in each cell: its value under independence.</p></div>
+      <div class="condbox"><h3 id="rcondh">Sales given the weather</h3><div id="rcond"></div><p class="tiphint" id="rindep"></p></div>
+    </div>
+    <div class="tbl reftbl"><table>
+      <thead><tr><th>Idea</th><th>With a table (discrete)</th><th>With densities (continuous)</th></tr></thead>
+      <tbody>
+        <tr><td><b>Marginal</b><br>one variable alone</td><td>\(P(X=x)=\sum_y P(X=x,Y=y)\)<br>add up a row</td><td>\(f_X(x)=\int f_{XY}(x,y)\,dy\)</td></tr>
+        <tr><td><b>Conditional</b><br>Y once X is known</td><td>\(P(Y=y\mid X=x)=\dfrac{P(X=x,Y=y)}{P(X=x)}\)<br>divide a row by its total</td><td>\(f_{Y\mid X}(y\mid x)=\dfrac{f_{XY}(x,y)}{f_X(x)}\)</td></tr>
+        <tr><td><b>Joint</b><br>both together</td><td>\(P(X=x,Y=y)=P(Y=y\mid X=x)\,P(X=x)\)</td><td>\(f_{XY}=f_{Y\mid X}\,f_X\): step 2</td></tr>
+        <tr><td><b>Independence</b><br>knowing X says nothing about Y</td><td>\(P(X=x,Y=y)=P(X=x)\,P(Y=y)\)</td><td>\(F_{XY}(x,y)=F(x)\,G(y)\), the copula \(C(u,v)=uv\): step 3</td></tr>
+      </tbody></table></div>
+    <p class="lede">Notice that the totals at the edges never move with the slider. The slider changes only how weather and sales pair up, while each variable on its own stays the same. Keeping the marginals fixed and changing only the dependence is exactly what a copula does.</p>
+    <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>Moving the dependence slider changes the inside of the table. What never changes?</summary><p>The row and column totals, the marginals. The slider only changes how the two variables pair up, which is exactly the job of a copula.</p></details><details class="qa"><summary>How do you check independence for one cell?</summary><p>Compare the cell with the product of its row total and column total. If every cell equals that product, the variables are independent.</p></details><details class="qa"><summary>What is the continuous version of “conditional times marginal”?</summary><p>\(f_{XY}(x,y)=f_{Y\mid X}(y\mid x)\,f_X(x)\): the model from step 2.</p></details></details>
+  </section>
 
   <section class="sect" id="transformations">
     <div class="eyebrow">Step 1 · Probability integral transform</div>
@@ -739,6 +816,72 @@ document.querySelectorAll('.dq-set').forEach(b=>b.addEventListener('click',()=>{
  const old=b.textContent;b.textContent='Done: scrolling to the plot';setTimeout(()=>b.textContent=old,1800);
  const rm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
  target.scrollIntoView({behavior:rm?'auto':'smooth',block:'center'});}));
+})();
+</script>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+/* Review A: density vs probability */
+const cv=$('rcv'),ctx=cv.getContext('2d');
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x));}
+const Phi=z=>0.5*(1+erf(z/Math.SQRT2)),phi=z=>Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+const RD={n:{lo:-3.5,hi:3.5,f:phi,F:Phi},e:{lo:-0.3,hi:5,f:y=>y<0?0:Math.exp(-y),F:y=>y<0?0:1-Math.exp(-y)},u:{lo:-0.1,hi:0.35,f:y=>(y<0||y>0.25)?0:4,F:y=>y<=0?0:y>=0.25?1:4*y}};
+function rgba(h,a){h=h.trim();if(h[0]==='#'&&h.length===7)return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';return h;}
+function fmt(v){return Math.abs(v)>=10?v.toFixed(1):v.toFixed(2);}
+function drawA(){
+ const d=RD[$('rd').value];let a=d.lo+(d.hi-d.lo)*(+$('ra').value)/1000,b=d.lo+(d.hi-d.lo)*(+$('rb').value)/1000;if(a>b){const t=a;a=b;b=t;}
+ $('rao').textContent=fmt(a);$('rbo').textContent=fmt(b);
+ const Fa=d.F(a),Fb=d.F(b);$('rfa').textContent=d.f(a).toFixed(3);$('rFa').textContent=Fa.toFixed(3);$('rFb').textContent=Fb.toFixed(3);$('rP').textContent=(Fb-Fa).toFixed(3);
+ const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg').trim(),mu=cs.getPropertyValue('--muted').trim(),line=cs.getPropertyValue('--line').trim(),cr=cs.getPropertyValue('--real').trim(),cu=cs.getPropertyValue('--unif').trim(),cn=cs.getPropertyValue('--norm').trim();
+ const W=Math.min(cv.clientWidth,680),H=440,dpr=window.devicePixelRatio||1;cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+ const L=56,R=W-16,X=y=>L+(R-L)*(y-d.lo)/(d.hi-d.lo);
+ let fmax=0;for(let i=0;i<=400;i++)fmax=Math.max(fmax,d.f(d.lo+(d.hi-d.lo)*i/400));const ftop=fmax*1.15;
+ const T1=24,B1=200,Y1=v=>B1-(B1-T1)*v/ftop,T2=250,B2=H-40,Y2=v=>B2-(B2-T2)*v;
+ ctx.fillStyle=rgba(cu,0.35);ctx.beginPath();ctx.moveTo(X(a),B1);for(let i=0;i<=200;i++){const y=a+(b-a)*i/200;ctx.lineTo(X(y),Y1(d.f(y)));}ctx.lineTo(X(b),B1);ctx.fill();
+ ctx.strokeStyle=cr;ctx.lineWidth=2.2;ctx.beginPath();for(let i=0;i<=600;i++){const y=d.lo+(d.hi-d.lo)*i/600;i?ctx.lineTo(X(y),Y1(d.f(y))):ctx.moveTo(X(y),Y1(d.f(y)));}ctx.stroke();
+ ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T1+0.5,R-L,B1-T1);
+ ctx.strokeStyle=cn;ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(X(a),Y1(d.f(a)));ctx.lineTo(L,Y1(d.f(a)));ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle=cn;ctx.beginPath();ctx.arc(X(a),Y1(d.f(a)),4,0,7);ctx.fill();
+ ctx.fillStyle=fg;ctx.font='600 13px Manrope, system-ui, sans-serif';ctx.fillText('pdf f(y): heights',L+8,T1+16);
+ ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillStyle=cu;const pl='shaded area = P(a ≤ Y ≤ b) = '+(Fb-Fa).toFixed(3);ctx.fillText(pl,L+8,T1+34);
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';[0,fmax].forEach(v=>{const t=v.toFixed(v>=10?0:2),w=ctx.measureText(t).width;ctx.fillText(t,L-w-6,Y1(v)+4);});
+ ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T2+0.5,R-L,B2-T2);
+ ctx.strokeStyle=fg;ctx.lineWidth=2.2;ctx.beginPath();for(let i=0;i<=600;i++){const y=d.lo+(d.hi-d.lo)*i/600;i?ctx.lineTo(X(y),Y2(d.F(y))):ctx.moveTo(X(y),Y2(d.F(y)));}ctx.stroke();
+ ctx.strokeStyle=mu;ctx.lineWidth=1;ctx.setLineDash([4,3]);[a,b].forEach(y=>{ctx.beginPath();ctx.moveTo(X(y),B1);ctx.lineTo(X(y),Y2(d.F(y)));ctx.lineTo(L,Y2(d.F(y)));ctx.stroke();});ctx.setLineDash([]);
+ ctx.strokeStyle=cu;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(L+4,Y2(Fa));ctx.lineTo(L+4,Y2(Fb));ctx.stroke();
+ ctx.fillStyle=fg;ctx.font='600 13px Manrope, system-ui, sans-serif';ctx.fillText('cdf F(y): accumulated area',L+14,T2+16);
+ ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillStyle=cu;ctx.fillText('F(b) − F(a) = '+(Fb-Fa).toFixed(3)+'  (the green bar on the left)',L+14,T2+34);
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';[0,0.5,1].forEach(v=>{const t=String(v),w=ctx.measureText(t).width;ctx.fillText(t,L-w-6,Y2(v)+4);});
+ [d.lo,(d.lo+d.hi)/2,d.hi].forEach((v,i)=>{const t=fmt(v),w=ctx.measureText(t).width;ctx.fillText(t,X(v)-(i===0?0:i===2?w:w/2),B2+15);});
+ ctx.fillStyle=cn;ctx.font='600 12px "JetBrains Mono", ui-monospace, monospace';ctx.fillText('a',X(a)-4,B2+30);ctx.fillText('b',X(b)-4,B2+30);
+}
+['ra','rb'].forEach(i=>$(i).addEventListener('input',drawA));$('rd').addEventListener('change',drawA);
+/* Review B: joint table */
+const rows=['Cold','Mild','Hot'],cols=['Low','Medium','High'];
+const DEP=[[22,6,2],[9,22,9],[2,6,22]];
+const rt=DEP.map(r=>r.reduce((a,b)=>a+b,0)),ct=cols.map((c,j)=>DEP.reduce((a,r)=>a+r[j],0));
+const IND=rows.map((r,i)=>cols.map((c,j)=>rt[i]*ct[j]/100));
+let sel=2;
+const rb=$('rrows');rows.forEach((r,i)=>{const b=document.createElement('button');b.type='button';b.className='rowbtn';b.textContent=r;b.setAttribute('aria-pressed',String(i===sel));b.addEventListener('click',()=>{sel=i;rb.querySelectorAll('button').forEach((x,k)=>x.setAttribute('aria-pressed',String(k===sel)));drawB();});rb.appendChild(b);});
+function drawB(){
+ const s=+$('rs').value;$('rso').textContent=s===0?'not at all':s<0.4?'a little':s<0.8?'moderately':'strongly';
+ const P=rows.map((r,i)=>cols.map((c,j)=>((1-s)*IND[i][j]+s*DEP[i][j])/100));
+ let h='<thead><tr><th>Weather \\ Sales</th>'+cols.map(c=>'<th>'+c+'</th>').join('')+'<th>P(weather)</th></tr></thead><tbody>';
+ rows.forEach((r,i)=>{h+='<tr class="'+(i===sel?'sel':'')+'"><th>'+r+'</th>'+cols.map((c,j)=>'<td class="cell">'+(100*P[i][j]).toFixed(1)+'%<small>'+IND[i][j].toFixed(1)+'%</small></td>').join('')+'<td class="mg">'+rt[i]+'%</td></tr>';});
+ h+='<tr><th>P(sales)</th>'+ct.map(v=>'<td class="mg">'+v+'%</td>').join('')+'<td class="mg">100%</td></tr></tbody>';
+ $('rtable').innerHTML=h;
+ $('rcondh').textContent='Sales given a '+rows[sel].toLowerCase()+' day';
+ let c='';cols.forEach((cn,j)=>{const cond=P[sel][j]/(rt[sel]/100),marg=ct[j]/100;c+='<div class="cbar"><span>'+cn+'</span><div class="track"><div class="fill" style="width:'+(100*cond).toFixed(1)+'%"></div><div class="mark" style="left:'+(100*marg).toFixed(1)+'%"></div></div><b>'+(100*cond).toFixed(0)+'%</b></div>';});
+ $('rcond').innerHTML=c+'<p class="tiphint">Bars: P(sales | '+rows[sel].toLowerCase()+'), the row divided by its total. Black marks: the marginal P(sales). When the bars reach the marks, the weather tells you nothing about sales.</p>';
+ const hh=P[2][2],prod=(rt[2]/100)*(ct[2]/100);
+ $('rindep').textContent='Independence check for a hot day with high sales: P(hot and high) = '+(100*hh).toFixed(1)+'% vs. P(hot) × P(high) = '+(100*prod).toFixed(1)+'%. '+(s===0?'They match in every cell, so weather and sales are independent.':'They differ, so weather and sales are dependent.');
+}
+$('rs').addEventListener('input',drawB);
+window.addEventListener('resize',drawA);try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',drawA);}catch(e){}
+new MutationObserver(drawA).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(drawA);}
+drawA();drawB();
 })();
 </script>
 </body>
