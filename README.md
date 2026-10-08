@@ -191,6 +191,20 @@ The companion tool. Give it the pieces of a two-variable model you know, and it 
 - **Mode 2 · Marginal of X + Y given X:** with $Y \mid X = x \sim N(\alpha + \beta x, \sigma^2)$, it derives $g(y) = \int f(y \mid x)\, f(x)\, dx$, its mean and variance, and the copula the model implies. The demand-and-revenue example shows an implied copula closest to **Gumbel**: busy days pull revenue up together.
 - **Mode 3 · From data:** paste two columns. It fits each marginal by maximum likelihood (normal, lognormal, exponential, uniform, Student t, bimodal) and each copula family from Kendall's $\tau$, then picks the lowest AIC $= 2k - 2\log L$. You can also force a family. Includes an example dataset of temperature and ice-cream sales.
 
+### Example datasets for mode 3
+
+Open a link, select all the text, copy it, and paste it into **3 · From data**. Each file has two columns, X and Y, with a header line.
+
+| Dataset | Pairs | What it is | What the Model Builder should find |
+|---|---|---|---|
+| [Fathers' and sons' heights](https://raw.githubusercontent.com/juanciro-commits/copula-lab/main/data/galton_fathers_sons.csv) | 481 | **Real data**, Galton's 1886 families (inches) | τ ≈ 0.31; Frank and Gaussian almost tied, as real data often are |
+| [Ice-cream sales and temperature](https://raw.githubusercontent.com/juanciro-commits/copula-lab/main/data/icecream_temperature_sales.csv) | 300 | Simulated: X normal, Y lognormal, Clayton τ = 0.5 | Clayton: low temperatures and low sales together |
+| [Flood losses in two cities](https://raw.githubusercontent.com/juanciro-commits/copula-lab/main/data/flood_losses_two_cities.csv) | 800 | Simulated: both lognormal, Gumbel τ = 0.5 | Gumbel: big losses happen together |
+| [Daily returns of two banks](https://raw.githubusercontent.com/juanciro-commits/copula-lab/main/data/bank_daily_returns.csv) | 500 | Simulated: both Student t, t copula τ = 0.5 | Student t marginals and a t copula: joint crashes and rallies |
+| [Ad spend and store visits](https://raw.githubusercontent.com/juanciro-commits/copula-lab/main/data/ad_spend_store_visits.csv) | 300 | Simulated: X lognormal, Y normal, Frank τ = 0.4 | Frank, narrowly ahead of the Gaussian |
+
+The simulated files have a known answer, so you can check whether the tool recovers the family that generated them. In the Galton data, the families are within one or two AIC points of each other: with real data, several models can describe the same relationship about equally well. The Galton data comes from the `GaltonFamilies` table in the R package HistData, via [Rdatasets](https://vincentarelbundock.github.io/Rdatasets/).
+
 The **"Your completed model"** table labels every piece as **Chosen**, **Derived** or **Estimated**, and two linked plots show the joint density (level sets enclosing 25%, 50%, 75% and 90% of the probability, the marginals, $E[Y \mid X = x]$ and a conditional slice) and the copula in the unit square.
 
 ---
@@ -201,6 +215,7 @@ The **"Your completed model"** table labels every piece as **Chosen**, **Derived
 |---|---|
 | `index.html` | The Copula Lab: one self-contained page |
 | `model-builder.html` | The Model Builder: one self-contained page |
+| `data/` | Example datasets for the Model Builder (CSV) |
 | `README.md` | This guide |
 
 To run them locally, download the `.html` files and open them in any browser. Formulas are rendered with [MathJax](https://www.mathjax.org/), loaded from a CDN, so they need an internet connection.
