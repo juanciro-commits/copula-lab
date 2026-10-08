@@ -167,6 +167,19 @@ table.jt tr.sel td,table.jt tr.sel th{background:rgba(127,127,127,.12)}
 .cbar b{font-family:var(--mono);font-weight:500;text-align:right}
 .rowbtn{width:auto;padding:5px 12px}
 .rowbtn[aria-pressed="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.mcard{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.mcard h3{font-family:var(--display);font-size:16px;margin:0 0 6px}
+.mcard p{margin:0;font-size:14px}
+.mcard.ok{border-top-color:var(--unif)}
+.mcard.bad{border-top-color:var(--norm)}
+.mcard.next{border-top-color:var(--accent)}
+.bizex{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.bizex h3{font-family:var(--display);font-size:18px;margin:2px 0 0}
+.bizgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;align-items:start}
+.bizgrid p{margin:0 0 8px;max-width:65ch}
+.bizside{display:flex;flex-direction:column;gap:12px;min-width:0}
+.bizside button{width:auto;align-self:flex-start}
 footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
@@ -176,9 +189,33 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
   <header>
     <div class="eyebrow">Stochastic methods · from transformations to copulas</div>
     <h1>Copula Lab</h1>
-    <p class="lede">Two short reviews, then a guided path in four steps. Each one uses the tool built in the step before: turning any variable into a uniform, combining two variables into a joint density, separating the marginals from the dependence with a copula, and measuring how strong that dependence is.</p>
-    <nav class="tabs" aria-label="Sections"><a href="#review-density">Review A · Density</a><a href="#review-joint">Review B · Joint &amp; conditional</a><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a><a href="#discussion">Discussion</a></nav>
+    <p class="lede">It starts with the classic correlation and where it falls short, then two short reviews and a guided path in four steps. Each one uses the tool built in the step before: turning any variable into a uniform, combining two variables into a joint density, separating the marginals from the dependence with a copula, and measuring how strong that dependence is.</p>
+    <nav class="tabs" aria-label="Sections"><a href="#motivation">Start · Correlation</a><a href="#review-density">Review A · Density</a><a href="#review-joint">Review B · Joint &amp; conditional</a><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a><a href="#discussion">Discussion</a></nav>
   </header>
+
+  <section class="sect" id="motivation">
+    <div class="eyebrow">Start here · why go beyond correlation</div>
+    <h2 class="big">Correlation and its regression line</h2>
+    <p class="lede">The Pearson correlation and its regression line are the most basic tools for describing how two variables move together. The correlation measures the linear association; the regression line uses it to predict Y from X, with slope <span class="formula">b₁ = r · s<sub>y</sub> / s<sub>x</sub></span>. They work very well when the relationship is linear, as with normal variables. But they only see the linear part.</p>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>Y is always exactly \(e^{X}\). The relationship is perfect. Will the Pearson correlation be 1?</summary><p>No. The points lie on a curve, not a line, so Pearson stays below 1. Kendall's \(\tau\) is exactly 1, because a larger X always comes with a larger Y.</p></details><details class="qa"><summary>Is the regression line of Y on X the same as the line of X on Y?</summary><p>No. One minimizes vertical distances and the other horizontal ones. They only coincide when the correlation is perfect. The correlation itself is symmetric.</p></details><details class="qa"><summary>Can a few extreme points change the correlation a lot?</summary><p>Yes. Pearson uses the actual values, so a handful of far-away points can pull it up or down. Rank-based measures like Kendall's \(\tau\) barely move.</p></details></details>
+    <div class="mgrid">
+      <div class="mcard ok"><h3>Where it works</h3><p>The relationship is a straight line with even scatter, for example two jointly normal variables like fathers' and sons' heights. Then the correlation describes the dependence completely, and \(r^2\) is the share of the variance of Y that the line explains.</p></div>
+      <div class="mcard bad"><h3>Where it struggles</h3><p>A curved relationship from skewed variables; heavy tails or outliers that pull the line; dependence that lives in the extremes. With different marginals, Pearson may not even reach 1 when the relationship is perfect.</p></div>
+      <div class="mcard next"><h3>What we need instead</h3><p>A way to measure dependence that ignores the shape of each variable: ranks, Kendall's \(\tau\) and, finally, copulas. The rest of this page builds that toolkit step by step.</p></div>
+    </div>
+    <div class="controls">
+      <div class="ctl"><span class="lbl">Relationship</span><div class="checks" id="mscen" role="group" aria-label="Choose a relationship"></div></div>
+      <div class="ctl"><label for="mnoise">Noise around the relationship</label><div class="range"><input type="range" id="mnoise" min="0" max="1" step="0.05" value="0.3"><output id="mno">–</output></div></div>
+      <div class="ctl"><label for="mnew">Sample of 400 points</label><button id="mnew" type="button">Draw a new sample</button></div>
+    </div>
+    <div class="metrics">
+      <div class="metric real"><span>Pearson correlation r</span><strong id="mr">–</strong></div>
+      <div class="metric"><span>r² (share explained by the line)</span><strong id="mr2">–</strong></div>
+      <div class="metric unif"><span>Kendall's τ (order only)</span><strong id="mk">–</strong></div>
+      <div class="metric line"><span>Regression line</span><strong id="mline" class="small">–</strong></div>
+    </div>
+    <div class="plot"><p class="tiphint" id="mnote"></p><canvas id="mcv" class="tcanvas" aria-label="Scatter plot of the chosen relationship with its least-squares regression line"></canvas></div>
+  </section>
 
   <section class="sect review" id="review-density">
     <div class="eyebrow">Review A · before we start</div>
@@ -289,6 +326,23 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       <div class="fbox wide"><span class="tip" tabindex="0" data-tip="t-jxy">Joint density and level sets</span><div class="math" id="jxy"></div></div>
     </div>
     <div class="plot"><canvas id="jcv" class="tcanvas" aria-label="Joint density of X and Y with level sets, the marginal of X on top, the marginal of Y on the right and a conditional slice"></canvas></div>
+    <div class="bizex">
+      <div class="bizhead"><span class="dq-step">Business example</span><h3>Daily demand and daily revenue</h3></div>
+      <div class="bizgrid">
+        <div>
+          <p><b>X = daily demand</b>, in hundreds of units. You know it well from historical data, and it follows a lognormal: always positive, usually moderate, with occasional very busy days.</p>
+          <p><b>Y = daily revenue</b>, in thousands of dollars. You know how revenue behaves <em>once demand is known</em>: at $15 per unit, 100 units bring about $1,500, so revenue sits around <span class="formula">μ(x) = 1.5·x</span>, give or take about $300 from discounts and returns <span class="formula">(σ = 0.3)</span>.</p>
+          <p>With those two layers you never model revenue directly, yet its whole distribution follows from them: the curve on the right of the plot. That lets you answer questions such as how likely a day with more than $3,000 in revenue is.</p>
+          <p class="small-note">This is deducing, not estimating: no data is fitted here. If the two layers are right, the result is exact.</p>
+        </div>
+        <div class="bizside">
+          <button id="jbiz" type="button">Load this example</button>
+          <div class="metric unif"><span>P(revenue &gt; $3,000), with the settings on screen</span><strong id="jtail">–</strong></div>
+          <div class="metric"><span>E[Y] = α + β·E[X]</span><strong id="jey" class="small">–</strong></div>
+          <div class="metric"><span>V(Y) = β²·V(X) + σ²</span><strong id="jvy" class="small">–</strong></div>
+        </div>
+      </div>
+    </div>
     <div class="guide">
       <section>
         <h2>How to read it</h2>
@@ -774,6 +828,10 @@ function draw(){
  else tex('jfx','f_X(x)=\\frac{1}{\\sqrt{2\\pi('+f2(sd)+')^2}}\\exp\\!\\left[-\\frac{(x-'+f2(m)+')^2}{2('+f2(sd)+')^2}\\right]\\quad\\text{(same mean and variance as the lognormal)}','f_X(x) = normal(mean '+f2(m)+', sd '+f2(sd)+')');
  tex('jfy','f_{Y\\mid X}(y\\mid x)=\\frac{1}{\\sqrt{2\\pi('+f2(p.sg)+')^2}}\\exp\\!\\left[-\\frac{(y-\\mu(x))^2}{2('+f2(p.sg)+')^2}\\right],\\qquad '+mux,'f(y|x) = normal(μ(x), σ='+f2(p.sg)+')');
  tex('jxy','f_{XY}(x,y)=f_{Y\\mid X}(y\\mid x)\\,f_X(x),\\qquad L_c=\\{(x,y):f_{XY}(x,y)=c\\}','f_XY = f(y|x)·f_X(x)');
+ {const erfL=x=>{const sg=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);return sg*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x));};
+  const PhiL=z=>0.5*(1+erfL(z/Math.SQRT2));let tail=0;const N2=4000,lo2=p.xd==='l'?1e-6:m-8*sd,hi2=p.xd==='l'?Math.exp(p.lam+8*p.tau):m+8*sd,dx2=(hi2-lo2)/N2;
+  for(let i=0;i<N2;i++){const x=lo2+(i+0.5)*dx2;tail+=fx(x,p)*(1-PhiL((3-(p.a+p.b*x))/p.sg))*dx2;}
+  $('jtail').textContent=(100*tail).toFixed(1)+'%';$('jey').textContent=(p.a+p.b*m).toFixed(2);$('jvy').textContent=(p.b*p.b*sd*sd+p.sg*p.sg).toFixed(2);}
  const fxCode=p.xd==='l'?"fX = np.exp(-(np.log(X) - lam)**2 / (2*tau**2)) / (X * np.sqrt(2*np.pi*tau**2))":"m = np.exp(lam + tau**2/2)\nsd = np.sqrt((np.exp(tau**2) - 1) * np.exp(2*lam + tau**2))\nfX = np.exp(-(X - m)**2 / (2*sd**2)) / np.sqrt(2*np.pi*sd**2)";
  $('jcode').textContent=`import numpy as np
 import matplotlib.pyplot as plt
@@ -797,6 +855,7 @@ ax.set_xlabel('x'); ax.set_ylabel('y'); ax.legend()
 ax.set_title('Level sets of f_XY')
 plt.show()`;}
 ids.forEach(i=>$(i).addEventListener('input',draw));['jxd','jc','jp','jm','jsl'].forEach(i=>$(i).addEventListener('change',draw));
+$('jbiz').addEventListener('click',()=>{$('jxd').value='l';$('jl').value=0;$('jt').value=0.5;$('ja').value=0;$('jb').value=1.5;$('js').value=0.3;$('jp').checked=true;draw();const rm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;$('jcv').scrollIntoView({behavior:rm?'auto':'smooth',block:'center'});});
 $('jreset').addEventListener('click',()=>{$('jxd').value='l';$('jl').value=0;$('jt').value=0.5;$('ja').value=0;$('jb').value=1;$('js').value=0.5;draw();});
 $('jcopy').addEventListener('click',()=>{const t=$('jcode').textContent,b=$('jcopy');navigator.clipboard.writeText(t).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy code',1500);}).catch(()=>{const r=document.createRange();r.selectNodeContents($('jcode'));const sl=window.getSelection();sl.removeAllRanges();sl.addRange(r);b.textContent='Selected: press Ctrl+C';});});
 window.addEventListener('resize',draw);try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
@@ -882,6 +941,57 @@ window.addEventListener('resize',drawA);try{window.matchMedia('(prefers-color-sc
 new MutationObserver(drawA).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 if(document.fonts&&document.fonts.ready){document.fonts.ready.then(drawA);}
 drawA();drawB();
+})();
+</script>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id),cv=$('mcv'),ctx=cv.getContext('2d');
+function rn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function rchi(k){let s=0;for(let i=0;i<k;i++){const z=rn();s+=z*z;}return s;}
+const SC=[
+ {k:'lin',name:'Linear',note:'A straight-line relationship with normal variables: the line fits the cloud and Pearson describes the dependence well.'},
+ {k:'curve',name:'Curved (Y = e^X)',note:'Y grows with X along a curve, as with a lognormal Y. Set the noise to 0: the relationship is perfect and Kendall reaches 1, but Pearson stays below 1 and the line misses the curve.'},
+ {k:'heavy',name:'Heavy tails',note:'Student t variables with a few extreme points. Draw new samples and watch Pearson and the line jump around while Kendall stays steady.'}];
+let scen='lin',base=[];
+function sample(){base=[];for(let i=0;i<400;i++)base.push([rn(),rn(),Math.sqrt(rchi(2)/2)]);}
+const bw=$('mscen');SC.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='rowbtn';b.textContent=s.name;b.setAttribute('aria-pressed',String(s.k===scen));b.addEventListener('click',()=>{scen=s.k;bw.querySelectorAll('button').forEach((x,i)=>x.setAttribute('aria-pressed',String(SC[i].k===scen)));draw();});bw.appendChild(b);});
+function data(){const nz=+$('mnoise').value;return base.map(([a,e,w])=>{
+ if(scen==='lin')return [a,0.8*a+nz*1.2*e];
+ if(scen==='curve'){const y=Math.exp(1.3*a+nz*1.0*e);return [a,y];}
+ const x=a/w,y=(0.7*a+nz*0.9*e)/w;return [x,y];});}
+function stats(P){const n=P.length;let mx=0,my=0;P.forEach(([x,y])=>{mx+=x;my+=y;});mx/=n;my/=n;let sxy=0,sxx=0,syy=0;P.forEach(([x,y])=>{sxy+=(x-mx)*(y-my);sxx+=(x-mx)**2;syy+=(y-my)**2;});
+ const r=sxy/Math.sqrt(sxx*syy),b1=sxy/sxx,b0=my-b1*mx;let c=0,d=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const s=(P[i][0]-P[j][0])*(P[i][1]-P[j][1]);if(s>0)c++;else if(s<0)d++;}return {r,b0,b1,tau:(c-d)/(c+d||1)};}
+function rgba(h,a){h=h.trim();if(h[0]==='#'&&h.length===7)return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';return h;}
+function q(arr,p){const s=[...arr].sort((a,b)=>a-b);return s[Math.floor(p*(s.length-1))];}
+function f2(v){return Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2);}
+function draw(){
+ const nz=+$('mnoise').value;$('mno').textContent=nz===0?'none':nz.toFixed(2);
+ const P=data(),st=stats(P);$('mr').textContent=st.r.toFixed(2);$('mr2').textContent=(st.r*st.r).toFixed(2);$('mk').textContent=st.tau.toFixed(2);
+ $('mline').textContent='ŷ = '+f2(st.b0)+(st.b1<0?' − ':' + ')+f2(Math.abs(st.b1))+'·x';
+ $('mnote').textContent=SC.find(s=>s.k===scen).note;
+ const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);
+ const xr=scen==='heavy'?{lo:q(xs,0.01),hi:q(xs,0.99)}:{lo:Math.min(...xs),hi:Math.max(...xs)};
+ const yr=scen==='heavy'?{lo:q(ys,0.01),hi:q(ys,0.99)}:{lo:Math.min(...ys),hi:Math.max(...ys)};
+ const px=(xr.hi-xr.lo)*0.06,py=(yr.hi-yr.lo)*0.06;xr.lo-=px;xr.hi+=px;yr.lo-=py;yr.hi+=py;
+ const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg').trim(),mu=cs.getPropertyValue('--muted').trim(),line=cs.getPropertyValue('--line').trim(),cr=cs.getPropertyValue('--real').trim();
+ const W=Math.min(cv.clientWidth,680),H=Math.round(Math.max(320,Math.min(440,W*0.7))),dpr=window.devicePixelRatio||1;cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+ const L=56,R=W-16,T=14,B=H-36,X=x=>L+(R-L)*(x-xr.lo)/(xr.hi-xr.lo),Y=y=>B-(B-T)*(y-yr.lo)/(yr.hi-yr.lo);
+ ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T+0.5,R-L,B-T);
+ ctx.save();ctx.beginPath();ctx.rect(L,T,R-L,B-T);ctx.clip();
+ ctx.fillStyle=rgba(cr,0.5);P.forEach(([x,y])=>{ctx.beginPath();ctx.arc(X(x),Y(y),2.2,0,7);ctx.fill();});
+ ctx.strokeStyle=fg;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(X(xr.lo),Y(st.b0+st.b1*xr.lo));ctx.lineTo(X(xr.hi),Y(st.b0+st.b1*xr.hi));ctx.stroke();
+ ctx.restore();
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';
+ [xr.lo,(xr.lo+xr.hi)/2,xr.hi].forEach((v,i)=>{const t=f2(v),w=ctx.measureText(t).width;ctx.fillText(t,X(v)-(i===0?0:i===2?w:w/2),B+15);});
+ [yr.lo,(yr.lo+yr.hi)/2,yr.hi].forEach(v=>{const t=f2(v),w=ctx.measureText(t).width;ctx.fillText(t,L-w-6,Math.min(B,Math.max(T+10,Y(v)+4)));});
+ ctx.fillStyle=fg;ctx.font='12px Manrope, system-ui, sans-serif';ctx.fillText('x',R-8,B+30);ctx.fillText('y',L-40,T+10);
+}
+$('mnoise').addEventListener('input',draw);$('mnew').addEventListener('click',()=>{sample();draw();});
+window.addEventListener('resize',draw);try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(draw);}
+sample();draw();
 })();
 </script>
 </body>
