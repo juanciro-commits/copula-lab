@@ -190,7 +190,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div class="eyebrow">Stochastic methods · from transformations to copulas</div>
     <h1>Copula Lab</h1>
     <p class="lede">It starts with the classic correlation and where it falls short, then two short reviews and a guided path in four steps. Each one uses the tool built in the step before: turning any variable into a uniform, combining two variables into a joint density, separating the marginals from the dependence with a copula, and measuring how strong that dependence is.</p>
-    <nav class="tabs" aria-label="Sections"><a href="#motivation">Start · Correlation</a><a href="#review-density">Review A · Density</a><a href="#review-joint">Review B · Joint &amp; conditional</a><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a><a href="#discussion">Discussion</a></nav>
+    <nav class="tabs" aria-label="Sections"><a href="#motivation">Start · Correlation</a><a href="#review-density">Review A · Density</a><a href="#review-joint">Review B · Joint &amp; conditional</a><a href="#review-cov">Review C · Covariance</a><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a><a href="#discussion">Discussion</a></nav>
   </header>
 
   <section class="sect" id="motivation">
@@ -275,6 +275,55 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       </tbody></table></div>
     <p class="lede">Notice that the totals at the edges never move with the slider. The slider changes only how weather and sales pair up, while each variable on its own stays the same. Keeping the marginals fixed and changing only the dependence is exactly what a copula does.</p>
     <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>Moving the dependence slider changes the inside of the table. What never changes?</summary><p>The row and column totals, the marginals. The slider only changes how the two variables pair up, which is exactly the job of a copula.</p></details><details class="qa"><summary>How do you check independence for one cell?</summary><p>Compare the cell with the product of its row total and column total. If every cell equals that product, the variables are independent.</p></details><details class="qa"><summary>What is the continuous version of “conditional times marginal”?</summary><p>\(f_{XY}(x,y)=f_{Y\mid X}(y\mid x)\,f_X(x)\): the model from step 2.</p></details></details>
+  </section>
+
+  <section class="sect review" id="review-cov">
+    <div class="eyebrow">Review C · before we start</div>
+    <h2 class="big">Covariance and correlation</h2>
+    <p class="lede">Covariance answers one question: when X is above its average, does Y tend to be above its average too? Every point is compared with the two averages (the dashed lines). Points in the green corners push the covariance up, points in the orange corners push it down. Pick a relationship and watch the balance.</p>
+    <details class="quiz before"><summary><span class="qtag">Before</span> Before you start: test your intuition <span class="qn">· 3 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>On hot days ice-cream sales are high, on cold days they are low. Do you expect a positive or a negative covariance?</summary><p>Positive. Above-average temperature comes with above-average sales, and below with below, so the products \((x-\bar x)(y-\bar y)\) are mostly positive.</p></details><details class="qa"><summary>You change sales from dollars to cents. Does the relationship get 100 times stronger?</summary><p>No, the relationship is the same. The covariance does get multiplied by 100, because it carries the units of Y. That is why we also need a version without units.</p></details><details class="qa"><summary>If two variables have covariance 0, are they independent?</summary><p>Not necessarily. Covariance only detects straight-line patterns. The U-shaped example below has covariance close to 0 and a very strong relationship.</p></details></details>
+    <div class="controls">
+      <div class="ctl"><span class="lbl">Relationship</span><div class="checks" id="cscen" role="group" aria-label="Choose a relationship"></div></div>
+      <div class="ctl"><label for="cunit">Measure sales in</label><select id="cunit"><option value="1">Dollars</option><option value="100">Cents (× 100)</option></select></div>
+      <div class="ctl"><label for="cnew">Sample of 150 days</label><button id="cnew" type="button">Draw a new sample</button></div>
+    </div>
+    <div class="metrics">
+      <div class="metric real"><span>Covariance s<sub>xy</sub></span><strong id="ccov">–</strong><span class="mono-sub" id="ccovu">–</span></div>
+      <div class="metric"><span>s<sub>x</sub> · s<sub>y</sub></span><strong id="csd" class="small">–</strong></div>
+      <div class="metric unif"><span>Pearson r = s<sub>xy</sub> / (s<sub>x</sub> s<sub>y</sub>)</span><strong id="cr">–</strong></div>
+      <div class="metric norm"><span>Days in the green corners</span><strong id="cpos">–</strong></div>
+    </div>
+    <div class="plot"><p class="tiphint" id="cnote"></p><canvas id="ccv" class="tcanvas" aria-label="Scatter plot split by the two averages into four corners; points that add to the covariance are green, points that subtract are orange"></canvas></div>
+    <div class="mgrid">
+      <div class="fbox"><span>Definition</span><div class="math">\(\text{Cov}(X,Y)=E\big[(X-\mu_X)(Y-\mu_Y)\big]\)</div><p>The average product of the two deviations from the mean.</p></div>
+      <div class="fbox"><span>Shortcut for computing</span><div class="math">\(\text{Cov}(X,Y)=E[XY]-E[X]\,E[Y]\)</div><p>The same number, usually easier to calculate.</p></div>
+      <div class="fbox"><span>From a sample</span><div class="math">\(s_{xy}=\dfrac{1}{n-1}\displaystyle\sum_{i=1}^{n}(x_i-\bar x)(y_i-\bar y)\)</div><p>What the metric above computes from the points.</p></div>
+      <div class="fbox"><span>Correlation: covariance without units</span><div class="math">\(\rho=\dfrac{\text{Cov}(X,Y)}{\sigma_X\,\sigma_Y},\quad -1\le\rho\le 1\)</div><p>Dividing by both standard deviations cancels the units. This is Pearson's correlation.</p></div>
+    </div>
+    <h2>Properties you will use</h2>
+    <div class="tbl reftbl"><table>
+      <thead><tr><th>Property</th><th>Formula</th><th>In words</th></tr></thead>
+      <tbody>
+        <tr><td>A variable with itself</td><td>\(\text{Cov}(X,X)=V(X)\)</td><td>The variance is a special case of the covariance.</td></tr>
+        <tr><td>Changing units</td><td>\(\text{Cov}(aX+b,\ cY+d)=ac\,\text{Cov}(X,Y)\)</td><td>Shifting does nothing; rescaling multiplies. The correlation does not change (only its sign can flip).</td></tr>
+        <tr><td>Independence</td><td>\(X,Y\) independent \(\Rightarrow \text{Cov}(X,Y)=0\)</td><td>But <b>not</b> the other way around: covariance 0 does not prove independence.</td></tr>
+        <tr><td>Variance of a sum</td><td>\(V(aX+bY)=a^2V(X)+b^2V(Y)+2ab\,\text{Cov}(X,Y)\)</td><td>Positive covariance adds risk; negative covariance removes it.</td></tr>
+        <tr><td>Regression slope</td><td>\(b_1=\dfrac{s_{xy}}{s_x^2}=r\,\dfrac{s_y}{s_x}\)</td><td>The least-squares line from the Start section, written with the covariance.</td></tr>
+      </tbody></table></div>
+    <h2>Why the covariance matters: a two-stock portfolio</h2>
+    <p class="lede">You put half your money in stock A (daily volatility 2%) and half in stock B (3%). The portfolio return is \(P=0.5A+0.5B\), so its variance is \(V(P)=0.25\cdot 2^2+0.25\cdot 3^2+2\cdot 0.25\cdot\text{Cov}(A,B)\), with \(\text{Cov}(A,B)=\rho\cdot 2\cdot 3\). Move the correlation and watch the risk.</p>
+    <div class="controls">
+      <div class="ctl"><label for="prho">Correlation between the stocks ρ</label><div class="range"><input type="range" id="prho" min="-1" max="1" step="0.05" value="0.6"><output id="prhoo">–</output></div></div>
+    </div>
+    <div class="metrics">
+      <div class="metric real"><span>Cov(A, B)</span><strong id="pcov">–</strong></div>
+      <div class="metric"><span>V(P)</span><strong id="pvar">–</strong></div>
+      <div class="metric unif"><span>Portfolio volatility σ<sub>P</sub></span><strong id="psd">–</strong></div>
+      <div class="metric norm"><span>If you ignored the covariance</span><strong id="pign">–</strong></div>
+    </div>
+    <p class="tiphint" id="pnote"></p>
+    <p class="lede">Covariance 0 is not independence. The Student t copula with ρ = 0 has no correlation at all, yet its extremes still happen together. <button type="button" class="dq-set" style="width:auto" data-setup='{"kind": "cop", "fam": "t", "x": "n", "y": "n", "tau": 0}'>See it in step 3</button></p>
+    <details class="quiz after"><summary><span class="qtag">After</span> Check your understanding <span class="qn">· 4 questions</span></summary><p class="qhelp">Think about each one first, then click it to see the answer.</p><details class="qa"><summary>\(\text{Cov}(X,Y)=6\), \(\sigma_X=2\), \(\sigma_Y=5\). What is the correlation?</summary><p>\(\rho=6/(2\cdot 5)=0.6\).</p></details><details class="qa"><summary>Sales are now measured in cents instead of dollars. What happens to the covariance and to the correlation?</summary><p>The covariance is multiplied by 100. The correlation stays exactly the same, because the factor 100 also appears in \(\sigma_Y\) and cancels.</p></details><details class="qa"><summary>Why does the U-shaped example have covariance near 0 if temperature clearly drives the bill?</summary><p>Cold days (left) and hot days (right) both have high bills. The left side puts points in the orange corner and the right side puts them in the green corner, so they cancel. Covariance only measures a straight-line trend.</p></details><details class="qa"><summary>Two stocks with negative covariance: does combining them raise or lower the risk?</summary><p>Lower. The term \(2ab\,\text{Cov}(A,B)\) is negative, so the portfolio variance is smaller than without it. That is diversification.</p></details></details>
   </section>
 
   <section class="sect" id="transformations">
@@ -994,5 +1043,64 @@ if(document.fonts&&document.fonts.ready){document.fonts.ready.then(draw);}
 sample();draw();
 })();
 </script>
+<script>
+(function(){
+const $=id=>document.getElementById(id),cv=$('ccv'),ctx=cv.getContext('2d');
+function rn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const SC=[
+ {k:'pos',name:'Move together',yl:'Ice-cream sales',note:'Hot days come with high ice-cream sales. Most points sit in the green corners, so the covariance is positive.'},
+ {k:'neg',name:'Move opposite',yl:'Hot-coffee sales',note:'Hot days come with low hot-coffee sales. Most points sit in the orange corners, so the covariance is negative.'},
+ {k:'none',name:'Unrelated',yl:'Office-supply sales',note:'Temperature says nothing about office supplies. The points split evenly between green and orange, so the covariance is close to 0.'},
+ {k:'u',name:'U-shape',yl:'Electricity bill',note:'Cold days need heating and hot days need air conditioning, so the bill is high at both ends. The left half lands in orange and the right half in green: they cancel and the covariance is close to 0, even though temperature clearly drives the bill. Covariance 0 does not mean independence.'}];
+let scen='pos',base=[];
+function sample(){base=[];for(let i=0;i<150;i++)base.push([rn(),rn()]);}
+const bw=$('cscen');SC.forEach(s=>{const b=document.createElement('button');b.type='button';b.className='rowbtn';b.textContent=s.name;b.setAttribute('aria-pressed',String(s.k===scen));b.addEventListener('click',()=>{scen=s.k;bw.querySelectorAll('button').forEach((x,i)=>x.setAttribute('aria-pressed',String(SC[i].k===scen)));draw();});bw.appendChild(b);});
+function data(){const k=+$('cunit').value;return base.map(([a,e])=>{const t=20+6*a;let y;
+ if(scen==='pos')y=400+12*(t-20)+40*e;
+ else if(scen==='neg')y=400-12*(t-20)+40*e;
+ else if(scen==='none')y=400+70*e;
+ else y=120+2.2*(t-20)*(t-20)+15*e;
+ return [t,y*k];});}
+function rgba(h,a){h=h.trim();if(h[0]==='#'&&h.length===7)return 'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';return h;}
+function nf(v,d){return v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function big(v){const a=Math.abs(v);return a>=1000?nf(v,0):a>=10?nf(v,1):nf(v,2);}
+function draw(){
+ const k=+$('cunit').value,P=data(),n=P.length,sc=SC.find(s=>s.k===scen);
+ let mx=0,my=0;P.forEach(([x,y])=>{mx+=x;my+=y;});mx/=n;my/=n;
+ let sxy=0,sxx=0,syy=0,pos=0;P.forEach(([x,y])=>{const p=(x-mx)*(y-my);sxy+=p;sxx+=(x-mx)**2;syy+=(y-my)**2;if(p>0)pos++;});
+ sxy/=n-1;const sx=Math.sqrt(sxx/(n-1)),sy=Math.sqrt(syy/(n-1)),r=sxy/(sx*sy),u=k===1?'$':'¢';
+ $('ccov').textContent=big(sxy);$('ccovu').textContent='units: °C × '+u;
+ $('csd').textContent=nf(sx,1)+' °C × '+big(sy)+' '+u;$('cr').textContent=r.toFixed(2).replace(/^-0\.00$/,'0.00');
+ $('cpos').textContent=Math.round(100*pos/n)+'%';$('cnote').textContent=sc.note;
+ const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]);const xr={lo:Math.min(...xs),hi:Math.max(...xs)},yr={lo:Math.min(...ys),hi:Math.max(...ys)};
+ const px=(xr.hi-xr.lo)*0.06,py=(yr.hi-yr.lo)*0.08;xr.lo-=px;xr.hi+=px;yr.lo-=py;yr.hi+=py;
+ const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg').trim(),mu=cs.getPropertyValue('--muted').trim(),line=cs.getPropertyValue('--line').trim(),cg=cs.getPropertyValue('--unif').trim(),co=cs.getPropertyValue('--norm').trim();
+ const W=Math.min(cv.clientWidth,680),H=Math.round(Math.max(320,Math.min(440,W*0.7))),dpr=window.devicePixelRatio||1;cv.style.height=H+'px';cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+ const L=W<460?62:74,R=W-16,T=30,B=H-40,X=x=>L+(R-L)*(x-xr.lo)/(xr.hi-xr.lo),Y=y=>B-(B-T)*(y-yr.lo)/(yr.hi-yr.lo);
+ const xm=X(mx),ym=Y(my);
+ ctx.fillStyle=rgba(cg,0.08);ctx.fillRect(xm,T,R-xm,ym-T);ctx.fillRect(L,ym,xm-L,B-ym);
+ ctx.fillStyle=rgba(co,0.08);ctx.fillRect(L,T,xm-L,ym-T);ctx.fillRect(xm,ym,R-xm,B-ym);
+ ctx.strokeStyle=line;ctx.lineWidth=1;ctx.strokeRect(L+0.5,T+0.5,R-L,B-T);
+ ctx.setLineDash([5,4]);ctx.strokeStyle=mu;ctx.beginPath();ctx.moveTo(xm,T);ctx.lineTo(xm,B);ctx.moveTo(L,ym);ctx.lineTo(R,ym);ctx.stroke();ctx.setLineDash([]);
+ ctx.font='600 15px "JetBrains Mono", ui-monospace, monospace';
+ [[R-22,T+20,'+',cg],[L+10,B-10,'+',cg],[L+10,T+20,'−',co],[R-22,B-10,'−',co]].forEach(([x,y,t,c])=>{ctx.fillStyle=c;ctx.fillText(t,x,y);});
+ P.forEach(([x,y])=>{const p=(x-mx)*(y-my);ctx.fillStyle=rgba(p>0?cg:co,0.75);ctx.beginPath();ctx.arc(X(x),Y(y),3,0,7);ctx.fill();});
+ ctx.fillStyle=mu;ctx.font='11px "JetBrains Mono", ui-monospace, monospace';
+ ctx.fillText('x̄ = '+nf(mx,1),Math.min(xm+4,R-70),B-4);const yt='ȳ = '+big(my);ctx.fillText(yt,R-ctx.measureText(yt).width-4,ym-5);
+ [xr.lo,(xr.lo+xr.hi)/2,xr.hi].forEach((v,i)=>{const t=nf(v,0),w=ctx.measureText(t).width;ctx.fillText(t,X(v)-(i===0?0:i===2?w:w/2),B+15);});
+ [yr.lo,(yr.lo+yr.hi)/2,yr.hi].forEach(v=>{const t=nf(v,0),w=ctx.measureText(t).width;ctx.fillText(t,L-w-6,Math.min(B,Math.max(T+10,Y(v)+4)));});
+ ctx.fillStyle=fg;ctx.font='12px Manrope, system-ui, sans-serif';const xl='Temperature (°C)';ctx.fillText(xl,R-ctx.measureText(xl).width,B+32);ctx.fillText('↑ '+sc.yl+' ('+u+')',L,T-10);
+}
+function port(){const rho=+$('prho').value,cov=rho*6,v=0.25*4+0.25*9+0.5*cov,vi=0.25*4+0.25*9;
+ $('prhoo').textContent=rho.toFixed(2);$('pcov').textContent=cov.toFixed(2);$('pvar').textContent=v.toFixed(2);$('psd').textContent=Math.sqrt(Math.max(v,0)).toFixed(2)+'%';$('pign').textContent=Math.sqrt(vi).toFixed(2)+'%';
+ $('pnote').textContent=rho>0.02?'Positive covariance: the stocks fall together on bad days, so the portfolio is riskier than if they were unrelated.':rho<-0.02?'Negative covariance: when one stock falls the other tends to rise, so they partly cancel. This is diversification.':'No covariance: the risk equals the case where the covariance term is ignored.';}
+$('cunit').addEventListener('change',draw);$('cnew').addEventListener('click',()=>{sample();draw();});$('prho').addEventListener('input',port);
+window.addEventListener('resize',draw);try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready){document.fonts.ready.then(draw);}
+sample();draw();port();
+})();
+</script>
+
 </body>
 </html>
