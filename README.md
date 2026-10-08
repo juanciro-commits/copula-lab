@@ -143,4 +143,6 @@ To run it locally, download `index.html` and open it in any browser. Formulas ar
 
 ---
 
-Made by Juan Salazar · MSBA, University of Central Florida · Stochastic Methods for Business Analytics
+## Credits
+
+Made by **Juan Salazar** (MSBA, UCF, Stochastic Methods for Business Analytics). Built in collaboration with **Claude** (Anthropic), an AI assistant.
