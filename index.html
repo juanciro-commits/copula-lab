@@ -141,6 +141,15 @@ pre.code{background:var(--surface);border:1px solid var(--line);border-radius:8p
 .qa{border-top:1px solid var(--line);padding:8px 0}
 .qa>summary{cursor:pointer;max-width:72ch}
 .qa>p{margin:6px 0 0 18px;max-width:70ch;color:var(--fg);background:var(--bg);border-radius:6px;padding:8px 10px}
+.dqgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.dq{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.dq-head{display:flex;align-items:center;gap:10px}
+.dq-n{font-family:var(--display);font-weight:700;font-size:18px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--bg);flex:none}
+.dq-step{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dq-q{margin:0;font-size:15px}
+.dq-actions button{width:auto}
+.dq-a>summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:14px}
+.dq-a>p{margin:8px 0 0;background:var(--bg);border-radius:6px;padding:10px 12px;font-size:14px}
 footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
@@ -151,7 +160,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div class="eyebrow">Stochastic methods · from transformations to copulas</div>
     <h1>Copula Lab</h1>
     <p class="lede">A guided path in four steps. Each one uses the tool built in the step before: turning any variable into a uniform, combining two variables into a joint density, separating the marginals from the dependence with a copula, and measuring how strong that dependence is.</p>
-    <nav class="tabs" aria-label="Sections"><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a></nav>
+    <nav class="tabs" aria-label="Sections"><a href="#transformations">1 · Transformations</a><a href="#joint">2 · Level sets</a><a href="#copulas">3 · Copulas</a><a href="#strength">4 · Kendall's τ</a><a href="#reference">Reference</a><a href="#discussion">Discussion</a></nav>
   </header>
 
   <section class="sect" id="transformations">
@@ -344,6 +353,24 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
         <tr><td><b>Bimodal</b><br>\(\tfrac12 N(-2,0.7^2)+\tfrac12 N(2,0.7^2)\)</td><td>\(\mathbb{R}\)</td><td>\(\tfrac12\frac{\varphi\left(\frac{y+2}{0.7}\right)}{0.7}+\tfrac12\frac{\varphi\left(\frac{y-2}{0.7}\right)}{0.7}\)</td><td>\(\tfrac12\Phi\!\left(\frac{y+2}{0.7}\right)+\tfrac12\Phi\!\left(\frac{y-2}{0.7}\right)\)</td><td>\(0\)</td><td>\(0.7^2+2^2=4.49\)</td><td>\(\tfrac12e^{-2t+0.245t^2}+\tfrac12e^{2t+0.245t^2}\)</td><td>Two customer types, deliveries from two warehouses</td><td class="m">mixture of two norm(), no single object</td></tr>
         <tr><td><b>Student t</b><br>\((\nu=3)\)</td><td>\(\mathbb{R}\)</td><td>\(\dfrac{6\sqrt3}{\pi(3+y^2)^2}\)</td><td>\(\tfrac12+\tfrac1\pi\!\left[\frac{y/\sqrt3}{1+y^2/3}+\arctan\frac{y}{\sqrt3}\right]\)</td><td>\(0\)</td><td>\(\dfrac{\nu}{\nu-2}=3\)</td><td>Does not exist</td><td>Daily stock returns, prices with crashes</td><td class="m">t(df=3)</td></tr>
       </tbody></table></div>
+  </section>
+
+<section class="sect" id="discussion">
+    <div class="eyebrow">Wrap-up</div>
+    <h2 class="big">Ten questions to talk through</h2>
+    <p class="lede">No formulas to memorize: each question asks you to predict what you will see for a given setting and explain why. Discuss first, press <b>Set it up on the page</b> to check your prediction, then open the discussion points.</p>
+    <div class="dqgrid">
+      <article class="dq"><div class="dq-head"><span class="dq-n">1</span><span class="dq-step">Step 3 · Copulas</span></div><p class="dq-q">Start with normal X and Y, Gaussian copula, τ = 0.5. Now switch Y to Lognormal. Before you look: what will happen to plot 2 and to the classic correlation?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "cop", "fam": "g", "x": "n", "y": "l", "tau": 0.5}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>Plot 2 stays exactly the same and so does Kendall's τ, because changing the marginal does not change the order of the data. Plot 1 bends and the classic Pearson correlation drops, since the cloud is no longer close to a straight line. Same relationship, different numbers: that is why Pearson alone can mislead.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">2</span><span class="dq-step">Step 3 · Copulas</span></div><p class="dq-q">Ice-cream shop: Clayton, τ = 0.6, X = temperature (Normal), Y = sales (Lognormal). A manager says: “When it's hot, our sales are easy to predict.” Does plot 2 back her up?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "cop", "fam": "c", "x": "n", "y": "l", "tau": 0.6}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>No, it says the opposite. Clayton is tight in the lower-left corner: cold days reliably bring low sales. In the upper-right corner the points spread out, so hot days bring higher sales that vary a lot. Cold days are the predictable ones.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">3</span><span class="dq-step">Step 3 · Copulas</span></div><p class="dq-q">An insurer models flood losses in two neighboring cities with a Gaussian copula, τ = 0.5. Switch to Gumbel with the same τ. Would the Gaussian model have under- or overestimated the chance that both cities suffer huge losses at once?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "cop", "fam": "gu", "x": "l", "y": "l", "tau": 0.5}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>Underestimated. With the same overall strength, Gumbel packs many more points into the upper-right corner: big losses arrive together. The Gaussian has no tail dependence, so it treats joint disasters as rarer than they really are. Same τ, very different risk.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">4</span><span class="dq-step">Step 3 · Copulas</span></div><p class="dq-q">Set τ = 0 and cycle through the five families. Does the family still matter when there is no dependence?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "cop", "fam": "t", "x": "n", "y": "n", "tau": 0}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>For Gaussian, Clayton, Gumbel and Frank, no: they all collapse into an even cloud on the square, which is independence. The Student t is the surprise. With ρ = 0 it still shows points in all four corners, because its extremes tend to happen together even when there is no overall correlation. Zero correlation does not always mean independence.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">5</span><span class="dq-step">Step 3 · Copulas</span></div><p class="dq-q">Take Clayton and move τ to −0.5. Which corner of plot 2 concentrates the points now, and what everyday story could fit that pattern?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "cop", "fam": "c", "x": "n", "y": "n", "tau": -0.5}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>The rotated Clayton concentrates the points in the upper-left corner: very low X comes reliably with very high Y. A story that fits: extremely cold days and heating bills. On the coldest days the bill is almost always very high, while on mild days the bill varies more.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">6</span><span class="dq-step">Step 3 · Copulas</span></div><p class="dq-q">Make X Bimodal and Y Normal with a Gaussian copula, τ = 0.5. Plot 1 shows two separate clusters. Is the relationship weaker, or is something wrong with the copula?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "cop", "fam": "g", "x": "m", "y": "n", "tau": 0.5}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>Nothing is wrong. The two clusters come from the marginal of X, which has two peaks. Plot 2 looks exactly as it does with two normals, because the copula only sees percentiles. The clusters are about the shape of X, not about how X and Y move together.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">7</span><span class="dq-step">Step 1 · Transformations</span></div><p class="dq-q">With the Exponential, follow y = 0.2 and then y = 3 with the slider. Which one moves more in u for a small change in y, and why?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "trans", "dist": "exp", "pos": 50}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>The value near 0. The cdf is steep there because that is where most of the probability sits, so a small step in y adds a lot of probability. Out at y = 3 the cdf is almost flat: there is so little probability in the tail that moving y barely changes u.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">8</span><span class="dq-step">Step 1 · Transformations</span></div><p class="dq-q">Choose the Bimodal and look at the cdf between the two peaks. Why is it almost flat there, and does the uniform on the right still come out flat?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "trans", "dist": "bim", "pos": 500}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>Very little probability lies between the peaks, so the accumulated probability barely grows there. The few values in that gap are squeezed into a small range of u. The uniform still comes out flat, because each band still holds exactly 20% of the probability.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">9</span><span class="dq-step">Step 2 · Level sets</span></div><p class="dq-q">Load the board example, then raise σ from 0.5 to 1.2. What happens to the rings, and what does it mean for predicting Y from X?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "joint", "xd": "l", "lam": 0, "tau": 0.5, "a": 0, "b": 1, "sg": 1.2}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>The rings get wider around the same line μ(x). The average relationship has not changed, but each value of X now leaves much more uncertainty about Y, so predictions are less precise. A strong slope with large noise can still be a weak relationship in practice.</p></details></article>
+      <article class="dq"><div class="dq-head"><span class="dq-n">10</span><span class="dq-step">Step 2 · Level sets</span></div><p class="dq-q">Switch X from Lognormal to Normal with the same mean and variance. Why do the rings change from teardrops to ellipses, and which one would you trust for a variable like income?</p><div class="dq-actions"><button type="button" class="dq-set" data-setup='{"kind": "joint", "xd": "n", "lam": 0, "tau": 0.5, "a": 0, "b": 1, "sg": 0.5}'>Set it up on the page</button></div><details class="dq-a"><summary>Show discussion points</summary><p>The normal is symmetric, so the rings are too. The lognormal is skewed: many small values and a long right tail, which squeezes the rings near small x and stretches them to the right. For income, the lognormal is more realistic: it is always positive and a few people earn far more than the rest.</p></details></article>
+    </div>
   </section>
 
 <div id="tiptpl" hidden>
@@ -698,6 +725,20 @@ $('jcopy').addEventListener('click',()=>{const t=$('jcode').textContent,b=$('jco
 window.addEventListener('resize',draw);try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
 new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 draw();
+})();
+</script>
+
+<script>
+(function(){
+function fire(el,ev){el.dispatchEvent(new Event(ev,{bubbles:true}));}
+document.querySelectorAll('.dq-set').forEach(b=>b.addEventListener('click',()=>{
+ const o=JSON.parse(b.dataset.setup);const g=id=>document.getElementById(id);let target;
+ if(o.kind==='cop'){g('fam').value=o.fam;g('dx').value=o.x;g('dy').value=o.y;g('tau').value=o.tau;fire(g('tau'),'input');fire(g('fam'),'change');target=g('cv');}
+ else if(o.kind==='trans'){g('tdist').value=o.dist;fire(g('tdist'),'change');g('ty').value=o.pos;fire(g('ty'),'input');target=g('tcv');}
+ else{g('jxd').value=o.xd;g('jl').value=o.lam;g('jt').value=o.tau;g('ja').value=o.a;g('jb').value=o.b;g('js').value=o.sg;fire(g('jxd'),'change');target=g('jcv');}
+ const old=b.textContent;b.textContent='Done: scrolling to the plot';setTimeout(()=>b.textContent=old,1800);
+ const rm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ target.scrollIntoView({behavior:rm?'auto':'smooth',block:'center'});}));
 })();
 </script>
 </body>
